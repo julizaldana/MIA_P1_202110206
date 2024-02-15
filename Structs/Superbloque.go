@@ -1,6 +1,8 @@
-package structs
+package Structs
 
 import "unsafe"
+
+//Contiene la informacion principal del sistema de archivos, ya sea EXT2/EXT3.
 
 type SuperBloque struct {
 	S_filesystem_type   int64
@@ -25,8 +27,9 @@ type SuperBloque struct {
 func NewSuperBloque() SuperBloque {
 	var spr SuperBloque
 	spr.S_magic = 0xEF53
-	spr.S_inode_size = int64(unsafe.Sizeof(Inodos{}))
-	spr.S_block_size = int64(unsafe.Sizeof(BloquesCarpetas{}))
+	spr.S_inode_s = int64(unsafe.Sizeof(Inodos{}))
+	spr.S_block_s = int64(unsafe.Sizeof(BloquesCarpetas{}))
 	spr.S_first_ino = 0
 	spr.S_first_blo = 0
+	return spr
 }

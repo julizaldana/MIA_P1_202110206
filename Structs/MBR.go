@@ -1,4 +1,4 @@
-package structs
+package Structs
 
 //MBR (MASTER BOOT RECORD) - Provee la informacion principal del disco, o archivo binario
 
@@ -13,7 +13,7 @@ type MBR struct {
 	Mbr_partition_4    Particion
 }
 
-func newMBR() MBR {
+func NewMBR() MBR {
 	var mb MBR
 	return mb
 }
