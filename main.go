@@ -12,7 +12,7 @@ import (
 func main() {
 	for {
 		fmt.Println("*=*=*=*=*=*= INGRESE UN COMANDO =*=*=*=*=*=")
-		fmt.Println("*=*=*=*= Para terminar con la aplicación ingresar -exit")
+		fmt.Println("*=*=*=*= Para terminar con la aplicación ingresar el comando exit")
 		fmt.Print("\t")
 
 		reader := bufio.NewReader(os.Stdin)
@@ -115,7 +115,7 @@ func SepararTokens(texto string) []string {
 
 func funciones(token string, tks []string) {
 	if token != "" {
-		if Comandos.Comparar(token, "EXEC") {
+		if Comandos.Comparar(token, "EXECUTE") {
 			fmt.Println("=*=*=*=*=*=*= FUNCION EXECUTE =*=*=*=*=*=*=")
 			FuncionExec(tks)
 		} else if Comandos.Comparar(token, "MKDISK") {
@@ -139,7 +139,7 @@ func FuncionExec(tokens []string) {
 		}
 	}
 	if path == "" {
-		Comandos.Error("EXEC", "Se requiere el parámetro \"path\" para este comando")
+		Comandos.Error("EXECUTE", "Se requiere el parámetro \"path\" para este comando")
 		return
 	}
 	Exec(path)

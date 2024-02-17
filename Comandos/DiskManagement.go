@@ -16,7 +16,6 @@ func ValidarDatosMKDISK(tokens []string) {
 	size := ""
 	fit := ""
 	unit := ""
-	path := ""
 	error_ := false
 	for i := 0; i < len(tokens); i++ {
 		token := tokens[i]
@@ -42,13 +41,6 @@ func ValidarDatosMKDISK(tokens []string) {
 				Error("MKDISK", "parametro U repetido en el comando: "+tk[0])
 				return
 			}
-		} else if Comparar(tk[0], "path") {
-			if path == "" {
-				path = tk[1]
-			} else {
-				Error("MKDISK", "parametro PATH repetido en el comando: "+tk[0])
-				return
-			}
 		} else {
 			Error("MKDISK", "no se esperaba el parametro "+tk[0])
 			error_ = true
@@ -64,13 +56,7 @@ func ValidarDatosMKDISK(tokens []string) {
 	if error_ {
 		return
 	}
-	if path == "" && size == "" {
-		Error("MKDISK", "se requiere parametro Path y Size para este comando")
-		return
-	} else if path == "" {
-		Error("MKDISK", "se requiere parametro Path para este comando")
-		return
-	} else if size == "" {
+	if size == "" {
 		Error("MKDISK", "se requiere parametro Size para este comando")
 		return
 	} else if !Comparar(fit, "BF") && !Comparar(fit, "FF") && !Comparar(fit, "WF") {
@@ -80,11 +66,13 @@ func ValidarDatosMKDISK(tokens []string) {
 		Error("MKDISK", "valores en parametro unit no esperados")
 		return
 	} else {
-		makeFile(size, fit, unit, path)
+		makeFile(size, fit, unit)
 	}
 }
 
-func makeFile(s string, f string, u string, path string) {
+var contadorDisco = 1
+
+func makeFile(s string, f string, u string) {
 	var disco = Structs.NewMBR()
 	size, err := strconv.Atoi(s)
 	if err != nil {
@@ -114,11 +102,18 @@ func makeFile(s string, f string, u string, path string) {
 	disco.Mbr_partition_3 = Structs.NewParticion()
 	disco.Mbr_partition_4 = Structs.NewParticion()
 
+	rutaBase := "/home/julio/Escritorio/MIA/P1/"
+
+	nombreDisco := string('A'+contadorDisco-1) + ".dsk"
+	contadorDisco++
+
+	path := rutaBase + nombreDisco
+
 	if ArchivoExiste(path) {
 		_ = os.Remove(path)
 	}
 
-	if !strings.HasSuffix(path, "dk") {
+	if !strings.HasSuffix(path, "dsk") {
 		Error("MKDISK", "Extensión de archivo no válida.")
 		return
 	}
@@ -160,25 +155,24 @@ func makeFile(s string, f string, u string, path string) {
 	binary.Write(&binario3, binary.BigEndian, disco)
 	EscribirBytes(file, binario3.Bytes())
 	file.Close()
-	nombreDisco := strings.Split(path, "/")
-	Mensaje("MKDISK", "¡Disco \""+nombreDisco[len(nombreDisco)-1]+"\" creado correctamente! Bv")
+	Mensaje("MKDISK", "¡Disco \""+nombreDisco+"\" creado correctamente!")
 }
 
 func RMDISK(tokens []string) {
 	if len(tokens) > 1 {
-		Error("RMDISK", "Solo se acepta el parámetro PATH.")
+		Error("RMDISK", "Solo se acepta el parámetro Driveletter.")
 		return
 	}
-	path := ""
+	driveLetter := ""
 	error_ := false
 	for i := 0; i < len(tokens); i++ {
 		token := tokens[i]
 		tk := strings.Split(token, "=")
-		if Comparar(tk[0], "path") {
-			if path == "" {
-				path = tk[1]
+		if Comparar(tk[0], "driveletter") {
+			if driveLetter == "" {
+				driveLetter = tk[1]
 			} else {
-				Error("RMDISK", "Parametro PATH repetido en el comando: "+tk[0])
+				Error("RMDISK", "Parametro Driveletter repetido en el comando: "+tk[0])
 				return
 			}
 		} else {
@@ -190,15 +184,20 @@ func RMDISK(tokens []string) {
 	if error_ {
 		return
 	}
-	if path == "" {
-		Error("RMDISK", "se requiere parametro Path para este comando")
+	if driveLetter == "" {
+		Error("RMDISK", "se requiere parametro Driveletter para este comando")
 		return
 	} else {
+		// Construir la ruta del archivo basado en la letra del driveLetter
+		rutaBase := "/home/julio/Escritorio/MIA/P1/"
+		nombreDisco := driveLetter + ".dsk"
+		path := rutaBase + nombreDisco
+
 		if !ArchivoExiste(path) {
 			Error("RMDISK", "No se encontró el disco en la ruta indicada.")
 			return
 		}
-		if !strings.HasSuffix(path, "dk") {
+		if !strings.HasSuffix(path, "dsk") {
 			Error("RMDISK", "Extensión de archivo no válida.")
 			return
 		}
@@ -214,7 +213,5 @@ func RMDISK(tokens []string) {
 			Mensaje("RMDISK", "Eliminación del disco "+path+", cancelada exitosamente.")
 			return
 		}
-
 	}
-
 }

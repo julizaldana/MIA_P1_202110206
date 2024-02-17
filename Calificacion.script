@@ -1,12 +1,12 @@
 #Calificacion
 # --- PARTE 1 ---
 #CREACION DE DISCOS
-mkdisk -size=1 -unit=M -path=/home/julio/Escritorio/disco.dk
-mkdisk -size=1 -path="/home/julio/Escritorio/eliminar.dk"
+mkdisk -size=1 -unit=M
+mkdisk -size=1
 
 pause
 
 #Eliminacion de discos
-rmdisk -path="/home/julio/Escritorio/eliminar.dk"
+rmdisk -driveletter=A
 
 pause
