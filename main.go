@@ -124,6 +124,15 @@ func funciones(token string, tks []string) {
 		} else if Comandos.Comparar(token, "RMDISK") {
 			fmt.Println("=*=*=*=*=*=*= FUNCION RMDISK =*=*=*=*=*=*=*=")
 			Comandos.RMDISK(tks)
+		} else if Comandos.Comparar(token, "FDISK") {
+			fmt.Println("=*=*=*=*=*=*= FUNCION FDISK =*=*=*=*=*=*=*=")
+			Comandos.ValidarDatosFDISK(tks)
+		} else if Comandos.Comparar(token, "REP") {
+			fmt.Println("=*=*=*=*=*=*= FUNCION REP =*=*=*=*=*=*=*=")
+			Comandos.ValidarDatosREP(tks)
+		} else if Comandos.Comparar(token, "MOUNT") {
+			fmt.Println("=*=*=*=*=*=*= FUNCION MOUNT =*=*=*=*=*=*=*=")
+			Comandos.ValidarDatosMOUNT(tks)
 		} else {
 			Comandos.Error("ANALIZADOR", "No se reconoce el comando \""+token+"\"")
 		}

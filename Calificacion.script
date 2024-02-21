@@ -9,4 +9,17 @@ pause
 #Eliminacion de discos
 rmdisk -driveletter=A
 
+# --- FDISK ---
+
+
+
+
+
+# --- MOUNT ---
+
+
+
+
+
+
 pause
