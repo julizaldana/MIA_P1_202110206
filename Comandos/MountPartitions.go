@@ -27,7 +27,7 @@ type ParticionMontada struct {
 
 var alfabeto = []byte{'a', 'b', 'c', 'd', 'e', 'f'}
 
-func ValidarDatosMOUNT(context []String) {
+func ValidarDatosMOUNT(context []string) {
 	name := ""
 	path := "" //SE QUITA Y LE COLOCO EL DRIVELETTER -> Para ir a buscar el archivo binario
 	for i := 0; i < len(context); i++ {
@@ -119,7 +119,7 @@ func mount(p string, n string) {
 					DiscMont[i].Particiones[j].Estado = 1
 					DiscMont[i].Particiones[j].Letra = alfabeto[j]
 					copy(DiscMont[i].Particiones[j].Nombre[:], n)
-					re := strconv.Itoa(i+1) + string(alfabeto[j])
+					//re := strconv.Itoa(i+1) + string(alfabeto[j])
 					Mensaje("MOUNT", "Se ha realizado correctamente el mount -id = ")
 					return
 				}
@@ -150,7 +150,8 @@ func listaMount() {
 						nombre += string(DiscMont[i].Particiones[j].Nombre[k])
 					}
 				}
-			}
+				fmt.Println("\t id: 06" + strconv.Itoa(i+1) + string(alfabeto[j]) + ", Nombre: " + nombre)
+			} //HAY QUE CAMBIARLO PORQUE
 		}
 	}
 }

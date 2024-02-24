@@ -1,0 +1,25 @@
+#CREACION DE DISCOS
+mkdisk -size=10 -unit=M
+mkdisk -size=1 -fit=BF
+
+pause
+
+#Eliminacion de discos
+rmdisk -driveletter=B
+
+# --- FDISK ---
+fdisk -type=P -unit=M -name=Part1 -size=25 -driveletter=A
+fdisk -type=P -unit=M -name=Part2 -size=25 -driveletter=A
+fdisk -type=P -unit=M -name=Part3 -size=25 -driveletter=A
+fdisk -type=E -unit=M -name=Part4 -size=30 -driveletter=A
+fdisk -type=L -unit=M -name=Part5 -size=25 -driveletter=A
+
+fdisk -type=P -unit=M -name=Part1 -size=2 -driveletter=A
+fdisk -type=E -unit=M -name=Part2 -size=6 -driveletter=A
+fdisk -type=L -unit=M -name=Part3 -size=2 -driveletter=A
+
+# --- MOUNT ---
+
+
+
+
