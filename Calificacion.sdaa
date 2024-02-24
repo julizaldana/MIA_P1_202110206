@@ -20,6 +20,16 @@ fdisk -type=L -unit=M -name=Part3 -size=2 -driveletter=A
 
 # --- MOUNT ---
 
-
+#MOUNT CARNET DE EJEMPLO 202110206
+#A106
+mount -driveletter=A -name=Part1
+#A206
+mount -driveletter=A  -name=Part2
+#A306
+mount -driveletter=A  -name=Part3
+#A406
+mount -driveletter=A  -name=Part4
+#A506
+mount -driveletter=A  -name=Part5
 
 

@@ -20,40 +20,58 @@ type DiscoMontado struct {
 }
 
 type ParticionMontada struct {
-	Letra  byte
+	Tipo   [20]byte
 	Estado byte
+	Id     [4]byte
 	Nombre [20]byte
 }
 
-var alfabeto = []byte{'a', 'b', 'c', 'd', 'e', 'f'}
+// CARNET -> 202110206 (ULTIMOS DOS DIGITOS -> 06)
 
 func ValidarDatosMOUNT(context []string) {
 	name := ""
-	path := "" //SE QUITA Y LE COLOCO EL DRIVELETTER -> Para ir a buscar el archivo binario
+	driveLetter := "" //SE QUITA Y LE COLOCO EL DRIVELETTER -> Para ir a buscar el archivo binario
 	for i := 0; i < len(context); i++ {
 		current := context[i]
-
 		comando := strings.Split(current, "=")
-
 		if Comparar(comando[0], "name") {
 			name = comando[1]
-		} else if Comparar(comando[0], "path") {
-			path = strings.ReplaceAll(comando[1], "\"", "")
+		}
+		if Comparar(comando[0], "driveletter") {
+			driveLetter = comando[1]
 		}
 
 	}
-	if path == "" || name == "" {
+	if driveLetter == "" || name == "" {
 		Error("MOUNT", "El comando MOUNT requiere parametros obligatorios")
 		return
+	} else {
+		// Construir la ruta del archivo basado en el driveLetter
+		rutaBase := "/home/julio/Escritorio/MIA/P1/"
+		nombreDisco := driveLetter + ".dsk"
+		path := rutaBase + nombreDisco
+
+		if !ArchivoExiste(path) {
+			Error("MOUNT", "No se encontró el disco con dicho driveletter")
+			return
+		}
+
+		mount(path, name, driveLetter)
+		listaMount()
 	}
-	mount(path, name)
-	listaMount()
+
 }
 
-func mount(p string, n string) {
+func mount(p string, n string, d string) {
 	file, error_ := os.Open(p)
 	if error_ != nil {
 		Error("MOUNT", "No se ha podido abrir el archivo.")
+		return
+	}
+	// Obtener el número de la partición del nombre, donde se corta el nombre de la partición. EJ: Part2, me queda solo (2), Part3, me queda solo (3)
+	numParticion, err := strconv.Atoi(strings.TrimPrefix(n, "Part"))
+	if err != nil {
+		Error("MOUNT", "No se pudo obtener el número de la partición del nombre.")
 		return
 	}
 
@@ -64,7 +82,7 @@ func mount(p string, n string) {
 	buffer := bytes.NewBuffer(data)
 	err_ := binary.Read(buffer, binary.BigEndian, &disk)
 	if err_ != nil {
-		Error("FDISK", "Error al leer el archivo.")
+		Error("MOUNT", "Error al leer el archivo")
 		return
 	}
 	file.Close()
@@ -88,17 +106,18 @@ func mount(p string, n string) {
 							nombreebr += string(ebr.Part_name[j])
 						}
 					}
+
 					if Comparar(nombreebr, n) && ebr.Part_mount == '1' {
 						encontrada = true
 						n = nombreebr
 						break
 					} else if nombreebr == n && ebr.Part_mount == '0' {
-						Error("MOUNT", "No se puede montar una particion logica eliminada")
+						Error("MOUNT", "No se puede montar una partición Lógica eliminada.")
 						return
 					}
 				}
 				if !encontrada {
-					Error("MOUNT", "No se encontró la partición lógica.")
+					Error("MOUNT", "No se encontró la partición Lógica.")
 					return
 				}
 			}
@@ -117,10 +136,10 @@ func mount(p string, n string) {
 				}
 				if DiscMont[i].Particiones[j].Estado == 0 {
 					DiscMont[i].Particiones[j].Estado = 1
-					DiscMont[i].Particiones[j].Letra = alfabeto[j]
 					copy(DiscMont[i].Particiones[j].Nombre[:], n)
-					//re := strconv.Itoa(i+1) + string(alfabeto[j])
-					Mensaje("MOUNT", "Se ha realizado correctamente el mount -id = ")
+					re := d + strconv.Itoa(numParticion) + "06"
+					copy(DiscMont[i].Particiones[j].Id[:], re)
+					Mensaje("MOUNT", "Se ha realizado correctamente el mount -id = "+re)
 					return
 				}
 			}
@@ -133,25 +152,36 @@ func mount(p string, n string) {
 			for j := 0; j < 26; j++ {
 				if DiscMont[i].Particiones[j].Estado == 0 {
 					DiscMont[i].Particiones[j].Estado = 1
+					copy(DiscMont[i].Particiones[j].Nombre[:], n)
+					re := d + strconv.Itoa(numParticion) + "06"
+					copy(DiscMont[i].Particiones[j].Id[:], re)
+					Mensaje("MOUNT", "Se ha realizado correctamente el mount -id = "+re)
+					return
 				}
 			}
 		}
 	}
-
 }
+
 func listaMount() {
 	fmt.Println("\n<-*-*-*-*-*-*-*-*-* LISTADO DE PARTICIONES MONTADAS -*-*-*-*-*-*-*-*-*-*>")
 	for i := 0; i < 99; i++ {
 		for j := 0; j < 26; j++ {
 			if DiscMont[i].Particiones[j].Estado == 1 {
 				nombre := ""
+				id := ""
 				for k := 0; k < len(DiscMont[i].Particiones[j].Nombre); k++ {
 					if DiscMont[i].Particiones[j].Nombre[k] != 0 {
 						nombre += string(DiscMont[i].Particiones[j].Nombre[k])
 					}
 				}
-				fmt.Println("\t id: 06" + strconv.Itoa(i+1) + string(alfabeto[j]) + ", Nombre: " + nombre)
-			} //HAY QUE CAMBIARLO PORQUE
+				for k := 0; k < len(DiscMont[i].Particiones[j].Id); k++ {
+					if DiscMont[i].Particiones[j].Id[k] != 0 {
+						id += string(DiscMont[i].Particiones[j].Id[k])
+					}
+				}
+				fmt.Println("\t id: " + id + " || " + "nombre: " + nombre)
+			}
 		}
 	}
 }

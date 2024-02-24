@@ -56,7 +56,7 @@ func ValidarDatosFDISK(tokens []string) {
 		path := rutaBase + nombreDisco
 
 		if !ArchivoExiste(path) {
-			Error("RMDISK", "No se encontró el disco con dicho driveletter")
+			Error("FDISK", "No se encontró el disco con dicho driveletter")
 			return
 		}
 
