@@ -185,3 +185,48 @@ func listaMount() {
 		}
 	}
 }
+
+func ValidarDatosUNMOUNT(context []string) {
+	id := ""
+	for i := 0; i < len(context); i++ {
+		current := context[i]
+		comando := strings.Split(current, "=")
+		if Comparar(comando[0], "id") {
+			id = comando[1]
+		}
+	}
+	if id == "" {
+		Error("UNMOUNT", "El comando UNMOUNT requiere el id de forma obligatoria")
+		return
+	} else {
+		unmount(id)
+		listaMount()
+	}
+
+}
+
+// SE HACE UNA FUNCION UNMOUNT PARA PODER BUSCAR EL ID DENTRO DE LA ESTRUCTURA DE PARTICIONES Y SE DESMONTA SI EXISTE
+func unmount(id string) {
+	for i := 0; i < 99; i++ {
+		for j := 0; j < 26; j++ {
+			if DiscMont[i].Particiones[j].Estado == 1 {
+				currentID := ""
+				for k := 0; k < len(DiscMont[i].Particiones[j].Id); k++ {
+					if DiscMont[i].Particiones[j].Id[k] != 0 {
+						currentID += string(DiscMont[i].Particiones[j].Id[k])
+					}
+				}
+				if currentID == id {
+					// Desmontar la partición, y se coloca estado 0, de que no está montada la partición
+					DiscMont[i].Particiones[j].Estado = 0
+					DiscMont[i].Particiones[j].Tipo = [20]byte{}
+					DiscMont[i].Particiones[j].Id = [4]byte{}
+					DiscMont[i].Particiones[j].Nombre = [20]byte{}
+					fmt.Println("Partición desmontada exitosamente.")
+					return
+				}
+			}
+		}
+	} //SI NO SE ENCUENTRA LA PARTICION EN LA ESTRUCTURA, se manda un mensaje de que no se encontró
+	Error("UNMOUNT", "No se encontró la partición con el ID proporcionado.")
+}

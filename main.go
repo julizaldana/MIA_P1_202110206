@@ -133,6 +133,12 @@ func funciones(token string, tks []string) {
 		} else if Comandos.Comparar(token, "MOUNT") {
 			fmt.Println("=*=*=*=*=*=*= FUNCION MOUNT =*=*=*=*=*=*=*=")
 			Comandos.ValidarDatosMOUNT(tks)
+		} else if Comandos.Comparar(token, "UNMOUNT") {
+			fmt.Println("=*=*=*=*=*=*= FUNCION UNMOUNT =*=*=*=*=*=*=*=")
+			Comandos.ValidarDatosUNMOUNT(tks)
+		} else if Comandos.Comparar(token, "MKFS") {
+			fmt.Println("=*=*=*=*=*=*= FUNCION MKFS =*=*=*=*=*=*=*=")
+			Comandos.ValidarDatosMKFS(tks)
 		} else {
 			Comandos.Error("ANALIZADOR", "No se reconoce el comando \""+token+"\"")
 		}

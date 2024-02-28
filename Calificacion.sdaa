@@ -32,4 +32,7 @@ mount -driveletter=A  -name=Part4
 #A506
 mount -driveletter=A  -name=Part5
 
+# UNMOUNT
 
+unmount -id=A106
+unmount -id=A206
