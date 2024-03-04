@@ -163,6 +163,64 @@ func mount(p string, n string, d string) {
 	}
 }
 
+func GetMount(comando string, id string, p *string) Structs.Particion {
+	for i := 0; i < 99; i++ {
+		for j := 0; j < 26; j++ {
+			if DiscMont[i].Particiones[j].Estado == 1 {
+				currentID := ""
+				for k := 0; k < len(DiscMont[i].Particiones[j].Id); k++ {
+					if DiscMont[i].Particiones[j].Id[k] != 0 {
+						currentID += string(DiscMont[i].Particiones[j].Id[k])
+					}
+				}
+				if currentID == id {
+					// Obtener el path de la partición
+					path := ""
+					for k := 0; k < len(DiscMont[i].Path); k++ {
+						if DiscMont[i].Path[k] != 0 {
+							path += string(DiscMont[i].Path[k])
+						}
+					}
+
+					// Abrir el archivo del disco
+					file, error := os.Open(strings.ReplaceAll(path, "\"", ""))
+					if error != nil {
+						Error(comando, "No se ha encontrado el disco")
+						return Structs.Particion{}
+					}
+					defer file.Close()
+
+					// Leer el MBR del disco
+					disk := Structs.NewMBR()
+					file.Seek(0, 0)
+					data := leerBytes(file, int(unsafe.Sizeof(Structs.MBR{})))
+					buffer := bytes.NewBuffer(data)
+					err := binary.Read(buffer, binary.BigEndian, &disk)
+					if err != nil {
+						Error("FDSIK", "Error al leer el archivo")
+						return Structs.Particion{}
+					}
+
+					// Obtener el nombre de la partición
+					nombreParticion := ""
+					for k := 0; k < len(DiscMont[i].Particiones[j].Nombre); k++ {
+						if DiscMont[i].Particiones[j].Nombre[k] != 0 {
+							nombreParticion += string(DiscMont[i].Particiones[j].Nombre[k])
+						}
+					}
+
+					// Asignar el path al puntero p y retornar la partición encontrada
+					*p = path
+					return *BuscarParticiones(disk, nombreParticion, path)
+				}
+			}
+		}
+	}
+	// Si no se encuentra la partición, mostrar mensaje de error
+	Error(comando, "No se encontró la partición con el ID proporcionado.")
+	return Structs.Particion{}
+}
+
 func listaMount() {
 	fmt.Println("\n<-*-*-*-*-*-*-*-*-* LISTADO DE PARTICIONES MONTADAS -*-*-*-*-*-*-*-*-*-*>")
 	for i := 0; i < 99; i++ {

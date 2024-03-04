@@ -497,3 +497,7 @@ func ajustar(mbr Structs.MBR, p Structs.Particion, t []Transition, ps []Structs.
 		}
 	}
 }
+
+func VerificarNombreParticion(name string) {
+
+}

@@ -9,6 +9,9 @@ import (
 	"strings"
 )
 
+//PROYECTO 1 - MANEJO E IMPLEMENTACIÓN DE ARCHIVOS
+//NOMBRE: JULIO ALEJANDRO ZALDAÑA RÍOS 		CARNET: 202110206
+
 func main() {
 	for {
 		fmt.Println("*=*=*=*=*=*= INGRESE UN COMANDO =*=*=*=*=*=")

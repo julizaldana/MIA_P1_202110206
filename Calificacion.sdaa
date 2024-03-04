@@ -32,7 +32,15 @@ mount -driveletter=A  -name=Part4
 #A506
 mount -driveletter=A  -name=Part5
 
+#791a - obviar este comentario
+
 # UNMOUNT
 
 unmount -id=A106
 unmount -id=A206
+
+# MKFS
+
+mkfs -type=full -id=A106
+
+
