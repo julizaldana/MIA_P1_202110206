@@ -12,6 +12,8 @@ import (
 //PROYECTO 1 - MANEJO E IMPLEMENTACIÓN DE ARCHIVOS
 //NOMBRE: JULIO ALEJANDRO ZALDAÑA RÍOS 		CARNET: 202110206
 
+var logued = false //variable booleana para verificar si un usuario estará logueado en su sesión
+
 func main() {
 	for {
 		fmt.Println("*=*=*=*=*=*= INGRESE UN COMANDO =*=*=*=*=*=")
@@ -142,6 +144,78 @@ func funciones(token string, tks []string) {
 		} else if Comandos.Comparar(token, "MKFS") {
 			fmt.Println("=*=*=*=*=*=*= FUNCION MKFS =*=*=*=*=*=*=*=")
 			Comandos.ValidarDatosMKFS(tks)
+		} else if Comandos.Comparar(token, "LOGIN") {
+			fmt.Println("=*=*=*=*=*=*= FUNCION LOGIN =*=*=*=*=*=*=*=")
+			if logued {
+				Comandos.Error("LOGIN", "Ya hay un usuario en línea.")
+				return
+			} else {
+				logued = Comandos.ValidarDatosLOGIN(tks)
+			}
+		} else if Comandos.Comparar(token, "LOGOUT") {
+			fmt.Println("=*=*=*=*=*=*= FUNCION LOGOUT =*=*=*=*=*=*=*=")
+			if !logued {
+				Comandos.Error("LOGOUT", "Aún no se ha iniciado sesión.")
+				return
+			} else {
+				logued = Comandos.CerrarSesion()
+			}
+		} else if Comandos.Comparar(token, "MKGRP") {
+			fmt.Println("=*=*=*=*=*=*= FUNCION MKGRP =*=*=*=*=*=*=*=")
+			if !logued {
+				Comandos.Error("MKGRP", "Aún no se ha iniciado sesión.")
+				return
+			} else {
+				Comandos.ValidarDatosGrupos(tks, "MK")
+			}
+		} else if Comandos.Comparar(token, "RMGRP") {
+			fmt.Println("=*=*=*=*=*=*= FUNCION RMGRP =*=*=*=*=*=*=*=")
+			if !logued {
+				Comandos.Error("RMGRP", "Aún no se ha iniciado sesión.")
+				return
+			} else {
+				Comandos.ValidarDatosGrupos(tks, "RM")
+			}
+		} else if Comandos.Comparar(token, "MKUSR") {
+			fmt.Println("=*=*=*=*=*=*= FUNCION MKUSR =*=*=*=*=*=*=*=")
+			if !logued {
+				Comandos.Error("MKUSR", "Aún no se ha iniciado sesión.")
+				return
+			} else {
+				Comandos.ValidarDatosUsers(tks, "MK")
+			}
+		} else if Comandos.Comparar(token, "RMUSR") {
+			fmt.Println("=*=*=*=*=*=*= FUNCION RMUSR =*=*=*=*=*=*=*=")
+			if !logued {
+				Comandos.Error("RMUSR", "Aún no se ha iniciado sesión.")
+				return
+			} else {
+				Comandos.ValidarDatosUsers(tks, "RM")
+			}
+		} else if Comandos.Comparar(token, "RMUSR") {
+			fmt.Println("=*=*=*=*=*=*= FUNCION RMUSR =*=*=*=*=*=*=*=")
+			if !logued {
+				Comandos.Error("RMUSR", "Aún no se ha iniciado sesión.")
+				return
+			} else {
+				Comandos.ValidarDatosUsers(tks, "RM")
+			}
+		} else if Comandos.Comparar(token, "MKDIR") {
+			fmt.Println("=*=*=*=*=*=*= FUNCION MKDIR =*=*=*=*=*=*=*=")
+			if !logued {
+				Comandos.Error("MKDIR", "Aún no se ha iniciado sesión con ningún usuario.")
+				return
+			} else {
+				Comandos.ValidarDatosMKDIR(tks)
+			}
+		} else if Comandos.Comparar(token, "MKFILE") {
+			fmt.Println("=*=*=*=*=*=*= FUNCION MKFILE =*=*=*=*=*=*=*=")
+			if !logued {
+				Comandos.Error("MKFILE", "Aún no se ha iniciado sesión con ningún usuario.")
+				return
+			} else {
+				Comandos.ValidarDatosMKFILE(tks)
+			}
 		} else {
 			Comandos.Error("ANALIZADOR", "No se reconoce el comando \""+token+"\"")
 		}

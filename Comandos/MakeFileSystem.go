@@ -44,7 +44,7 @@ func ValidarDatosMKFS(context []string) {
 
 func crearFileSystem(id string, t string) {
 	p := ""
-	particion := GetMount("MKFS", id, &p)                                                                                                                                          //SE LLAMA AL COMANDO PARA OBTENER LA PARTCION
+	particion := GetMount("MKFS", id, &p)                                                                                                                                          //Obtener una particion con el GetMount(), que se obtiene ingresando el id de particion.                                                                                                                                        //SE LLAMA AL COMANDO PARA OBTENER LA PARTCION
 	n := math.Floor(float64(particion.Part_s-int64(unsafe.Sizeof(Structs.SuperBloque{})))) / float64(4+unsafe.Sizeof(Structs.Inodos{})+3*unsafe.Sizeof(Structs.BloquesArchivos{})) //obtener n del calculo para obtener el tamaño
 
 	//Creacion de superbloque
@@ -76,11 +76,13 @@ func ext2(spr Structs.SuperBloque, p Structs.Particion, n int64, path string) {
 		return
 	}
 
+	//AQUI SE ESCRIBE EL SUPERBLOQUE YA EN EL ARCHIVO BINARIO, EN EL INICIO DE LA PARTICION.
 	file.Seek(p.Part_start, 0)
 	var binario2 bytes.Buffer
 	binary.Write(&binario2, binary.BigEndian, spr)
 	EscribirBytes(file, binario2.Bytes())
 
+	//Se escribe el bitmap inodos despues del superbloque
 	zero := '0'
 	file.Seek(spr.S_bm_inode_start, 0)
 	for i := 0; i < int(n); i++ {
@@ -89,6 +91,7 @@ func ext2(spr Structs.SuperBloque, p Structs.Particion, n int64, path string) {
 		EscribirBytes(file, binarioZero.Bytes())
 	}
 
+	//Se inicializa bitmap bloques despues de bitmap de inodos
 	file.Seek(spr.S_bm_block_start, 0)
 	for i := 0; i < 3*int(n); i++ {
 		var binarioZero bytes.Buffer
@@ -96,7 +99,7 @@ func ext2(spr Structs.SuperBloque, p Structs.Particion, n int64, path string) {
 		EscribirBytes(file, binarioZero.Bytes())
 	}
 	inode := Structs.NewInodos()
-	//INICIALIZANDO EL INODO
+	//INICIALIZANDO EL INODO 0
 	inode.I_uid = -1
 	inode.I_gid = -1
 	inode.I_s = -1
@@ -106,13 +109,14 @@ func ext2(spr Structs.SuperBloque, p Structs.Particion, n int64, path string) {
 	inode.I_type = -1
 	inode.I_perm = -1
 
+	//Se escribe en el inicio de los inodos, se escribe el inodo 0, que contendrá la informacion del directorio raiz
 	file.Seek(spr.S_inode_start, 0)
 	for i := 0; i < int(n); i++ {
 		var binarioInodos bytes.Buffer
 		binary.Write(&binarioInodos, binary.BigEndian, inode)
 		EscribirBytes(file, binarioInodos.Bytes())
 	}
-
+	//INICIALIZANDO EL BLOQUE 0, que se escribirá en el espacio de informacion de los bloques
 	folder := Structs.NewBloquesCarpetas()
 
 	for i := 0; i < len(folder.B_content); i++ {
@@ -136,7 +140,7 @@ func ext2(spr Structs.SuperBloque, p Structs.Particion, n int64, path string) {
 		Error("MKFS", "No se ha encontrado el disco.")
 		return
 	}
-
+	//Lee los bytes del struct superbloque del archivo
 	file.Seek(p.Part_start, 0)
 	data := leerBytes(file, int(unsafe.Sizeof(Structs.SuperBloque{})))
 	buffer := bytes.NewBuffer(data)
