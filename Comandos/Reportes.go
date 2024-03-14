@@ -5,11 +5,8 @@ import (
 	"bytes"
 	"encoding/binary"
 	"fmt"
-	"io/ioutil"
-	"log"
 	"math"
 	"os"
-	"os/exec"
 	"strconv"
 	"strings"
 	"unsafe"
@@ -119,8 +116,7 @@ func dks(p string, id string) {
 		}
 	}
 
-	content := ""
-	content = "digraph G{\n rankdir=TB;\n forcelabels= true;\n graph { dpi = \"600\"] ; \n node [shape = plaintext];\n nodo 1 {label = <<table>\n <tr>\n"
+	content := "digraph G{\n rankdir=TB;\n forcelabels= true;\n graph [ dpi = \"600\"] ; \n node [shape = plaintext];\n nodo1 [label = <<table>\n <tr>\n"
 	var positions [5]int64
 	var positionsii [5]int64
 	positions[0] = disk.Mbr_partition_1.Part_start - (1 + int64(unsafe.Sizeof(Structs.MBR{})))
@@ -168,43 +164,70 @@ func dks(p string, id string) {
 			resta = math.Round(resta) / 100.00 //PARA OBTENER LOS PORCENTAJES
 			if resta != 0 {
 				s = fmt.Sprintf("%f", resta)
-				tmplogic += "<td>\"Libre\n " + s + "% libre de la partición extendida\"</td>\n"
+				tmplogic += "<td>\"Logica\n " + s + "% libre de la partición extendida\"</td>\n"
 				logic++
 			}
 			logic += 2 //Son los id, para los nodos de graphviz
+			file, err = os.Open(strings.ReplaceAll(pth, "\"", ""))
 
-		}
-		var tamPrim int64
-		for i := 0; i < 4; i++ {
-			if partitions[i].Part_type == 'E' {
-				tamPrim += partitions[i].Part_s
-				res := float64(partitions[i].Part_s) / float64(disk.Mbr_tamano)
-				res = math.Round(res*10000.00) / 100.00
-				s := fmt.Sprintf("%.2f", res)
-				content += "<td COLSPAN=" + strconv.Itoa(logic) + "> Extendida \n" + s + "% del disco </td>\n"
-			} else if partitions[i].Part_start != -1 {
-				tamPrim += partitions[i].Part_s
-				res := float64(partitions[i].Part_s) / float64(disk.Mbr_tamano)
-				res = math.Round(res*10000.00) / 100.00
-				s := fmt.Sprintf("%.2f", res)
-				content += "<td ROWSPAN='2'> Primaria \n" + s + "% del disco </td>\n"
+			if err != nil {
+				Error("REP", "No se ha encontrado el disco")
+				return
 			}
-		}
 
-		if tamPrim != 0 {
-			libre := disk.Mbr_tamano - tamPrim
-			res := float64(libre) / float64(disk.Mbr_tamano)
-			res = math.Round(res * 100)
+			file.Seek(auxEbr.Part_next, 0)
+			data = leerBytes(file, int(unsafe.Sizeof(Structs.EBR{})))
+			buffer = bytes.NewBuffer(data)
+			err_ = binary.Read(buffer, binary.BigEndian, &auxEbr)
+			if err_ != nil {
+				Error("REP", "Error al leer el archivo")
+				return
+			}
+			file.Close()
+		}
+		resta := float64(extended.Part_s) - float64(tamGen)
+		resta = resta / float64(disk.Mbr_tamano)
+		resta = math.Round(resta * 100)
+		if resta != 0 {
+			s := fmt.Sprintf("%.2f", resta)
+			tmplogic += "<td>\"Libre \n" + s + "% de la partición extendida. \"</td>\n"
+			logic++
+		}
+		tmplogic += "</tr>\n\n"
+		logic += 2
+	}
+	var tamPrim int64
+	for i := 0; i < 4; i++ {
+		if partitions[i].Part_type == 'E' {
+			tamPrim += partitions[i].Part_s
+			res := float64(partitions[i].Part_s) / float64(disk.Mbr_tamano)
+			res = math.Round(res*10000.00) / 100.00
 			s := fmt.Sprintf("%.2f", res)
-			content += "<td ROWSPAN='2'> Libre \n" + s + "% del disco </td>"
-
+			content += "<td COLSPAN='" + strconv.Itoa(logic) + "'> Extendida \n" + s + "% del disco </td>\n"
+		} else if partitions[i].Part_start != -1 {
+			tamPrim += partitions[i].Part_s
+			res := float64(partitions[i].Part_s) / float64(disk.Mbr_tamano)
+			res = math.Round(res*10000.00) / 100.00
+			s := fmt.Sprintf("%.2f", res)
+			content += "<td ROWSPAN='2'> Primaria \n" + s + "% del disco </td>\n"
 		}
-		content += "</tr>\n\n"
-		content += tmplogic
-		content += "</table>>];\n}\n"
+	}
 
-		fmt.Println(content)
+	if tamPrim != 0 {
+		libre := disk.Mbr_tamano - tamPrim
+		res := float64(libre) / float64(disk.Mbr_tamano)
+		res = math.Round(res * 100)
+		s := fmt.Sprintf("%.2f", res)
+		content += "<td ROWSPAN='2'> Libre \n" + s + "% del disco </td>"
 
+	}
+	content += "</tr>\n\n"
+	content += tmplogic
+	content += "</table>>];\n}\n"
+
+	fmt.Println(content)
+
+	/*
 		//CREAR IMAGEN
 		b := []byte(content)
 		err_ = ioutil.WriteFile(pd, b, 0644)
@@ -220,9 +243,7 @@ func dks(p string, id string) {
 		ioutil.WriteFile(p, cmd, os.FileMode(node))
 		disco := strings.Split(pth, "/")
 		Mensaje("REP", "Reporte tipo DISK del disco "+disco[len(disco)-1]+",creado correctamente")
-
-	}
-
+	*/
 }
 
 func tree(p string, id string) {
@@ -280,7 +301,7 @@ func tree(p string, id string) {
 		fileaux.Close()
 	}
 
-	content := "digraph G{\n rankdir=LR;\n graph [ dpi = \'608\' ]; \n  forcelabels=true; \n node { shape = plaintext};\n "
+	content := "digraph G{\n rankdir=LR;\n graph [ dpi = \"608\" ]; \n  forcelabels=true; \n node { shape = plaintext};\n "
 	for i := 0; i < int(freeI); i++ {
 		atime := arregloString(inode.I_atime)
 		ctime := arregloString(inode.I_ctime)
@@ -304,7 +325,33 @@ func tree(p string, id string) {
 	}
 
 	if inode.I_type == 0 {
-		for j := 0;
+		for j := 0; j < 16; j++ {
+			if inode.I_block[j] != -1 {
+				bloquesUsados = append(bloquesUsados, inode.I_block[j])
+				contadorBloques++
+				if existeEnArreglo(bloquesUsados, inode.I_block[j]) == 1 {
+					foldertmp := Structs.BloquesCarpetas{}
+
+					file.Seek(spr.S_block_start+int64(unsafe.Sizeof(Structs.BloquesCarpetas{}))*inode.I_block[j]*int64(unsafe.Sizeof(Structs.BloquesArchivos{}))*32*inode.I_block[j], 0)
+					data = leerBytes(file, int(unsafe.Sizeof(Structs.BloquesCarpetas{})))
+					buffer = bytes.NewBuffer(data)
+					err_ = binary.Read(buffer, binary.BigEndian, &foldertmp)
+
+					if err_ != nil {
+						Error("MKDIR", "Error al leer el archivo")
+						return
+					}
+
+					if foldertmp.B_content[j].B_inodo == -1 {
+						continue
+					}
+					content += "inode; " + strconv.Itoa(j) + ":" + strconv.Itoa(j) + "-> BLOCK" + strconv.Itoa(contadorBloques) + "_" + strconv.Itoa(int(inode.I_block[j])) + "\n"
+					content += "cont" + strconv.Itoa(contadorBloques) + "_" + strconv.Itoa(int(inode.I_block[j]))
+
+				}
+			}
+
+		}
 	}
 
 }
@@ -346,15 +393,17 @@ func fileR(p string, id string, ruta string) {
 		fileaux.Close()
 	}
 
-	var path string
-	particion := GetMount("MKDIR", id, &path)
-	tmp := GetPath(ruta)
-	data := getDataFile(tmp, particion, path)
-	b := []byte(data)
-	err_ := ioutil.WriteFile(p, b, 0644)
-	if err_ != nil {
-		log.Fatal(err_)
-	}
+	/*
+		var path string
+		particion := GetMount("MKDIR", id, &path)
+		tmp := GetPath(ruta)
+		data := getDataFile(tmp, particion, path)
+		b := []byte(data)
+		err_ := ioutil.WriteFile(p, b, 0644)
+		if err_ != nil {
+			log.Fatal(err_)
+		}
+	*/
 
 	archivo := strings.Split(ruta, "/")
 	Mensaje("REP", "Reporte tipo FILE del archivo"+archivo[len(archivo)-1]+"creado correctamente!")
@@ -416,6 +465,7 @@ func GetPath(path string) []string {
 	return result
 }
 
+/*
 func getDataFile(path []string, particion Structs.Particion, pth string) {
 	spr := Structs.NewSuperBloque()
 	inode := Structs.NewInodos()
@@ -454,3 +504,4 @@ func getDataFile(path []string, particion Structs.Particion, pth string) {
 	}
 
 }
+*/

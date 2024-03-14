@@ -2,6 +2,7 @@
 mkdisk -size=10 -unit=M
 mkdisk -size=1 -fit=BF
 
+
 pause
 
 #Eliminacion de discos
@@ -43,4 +44,35 @@ unmount -id=A206
 
 mkfs -type=full -id=A106
 
+pause
 
+#LOGIN, MKUSR, RMUSR, MKGRP, RMGRP
+login -user=root -pass=123 -id=A106
+
+mkgrp -name=usuarios
+
+mkusr -user=user1 -pass=usuario -grp=usuarios
+mkusr -user=user2 -pass=usuario2 -grp=usuarios
+
+rmusr -user=user2
+
+
+# MKDIR
+
+mkdir -r -path=/home/usac
+
+# REP
+
+mkdisk -size=200 -unit=M
+fdisk -type=P -unit=M -name=Part1 -size=25 -driveletter=A
+fdisk -type=P -unit=M -name=Part2 -size=25 -driveletter=A
+fdisk -type=P -unit=M -name=Part3 -size=25 -driveletter=A
+fdisk -type=E -unit=M -name=Part4 -size=30 -driveletter=A
+fdisk -type=L -unit=M -name=Part5 -size=10 -driveletter=A
+fdisk -type=L -unit=M -name=Part6 -size=10 -driveletter=A
+fdisk -type=L -unit=M -name=Part7 -size=5 -driveletter=A
+fdisk -type=L -unit=M -name=Part8 -size=5 -driveletter=A
+
+
+
+rep -id=A106 -path=/home/julio/Escritorio/MIA/disco.jpg -name=disk
