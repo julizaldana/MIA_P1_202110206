@@ -206,7 +206,9 @@ func funciones(token string, tks []string) {
 				Comandos.Error("MKDIR", "Aún no se ha iniciado sesión con ningún usuario.")
 				return
 			} else {
-				Comandos.ValidarDatosMKDIR(tks)
+				var p string
+				particion := Comandos.GetMount("MKDIR", Comandos.Logged.Id, &p)
+				Comandos.ValidarDatosMKDIR(tks, particion, p)
 			}
 		} else if Comandos.Comparar(token, "MKFILE") {
 			fmt.Println("=*=*=*=*=*=*= FUNCION MKFILE =*=*=*=*=*=*=*=")
@@ -215,6 +217,86 @@ func funciones(token string, tks []string) {
 				return
 			} else {
 				Comandos.ValidarDatosMKFILE(tks)
+			}
+		} else if Comandos.Comparar(token, "CAT") {
+			fmt.Println("=*=*=*=*=*=*= FUNCION CAT =*=*=*=*=*=*=*=")
+			if !logued {
+				Comandos.Error("CAT", "Aún no se ha iniciado sesión con ningún usuario.")
+				return
+			} else {
+				//Comandos.ValidarDatosCAT(tks)
+			}
+		} else if Comandos.Comparar(token, "REMOVE") {
+			fmt.Println("=*=*=*=*=*=*= FUNCION REMOVE =*=*=*=*=*=*=*=")
+			if !logued {
+				Comandos.Error("REMOVE", "Aún no se ha iniciado sesión con ningún usuario.")
+				return
+			} else {
+				//Comandos.ValidarDatosREMOVE(tks)
+			}
+		} else if Comandos.Comparar(token, "EDIT") {
+			fmt.Println("=*=*=*=*=*=*= FUNCION EDIT =*=*=*=*=*=*=*=")
+			if !logued {
+				Comandos.Error("EDIT", "Aún no se ha iniciado sesión con ningún usuario.")
+				return
+			} else {
+				//Comandos.ValidarDatosEDIT(tks)
+			}
+		} else if Comandos.Comparar(token, "RENAME") {
+			fmt.Println("=*=*=*=*=*=*= FUNCION RENAME =*=*=*=*=*=*=*=")
+			if !logued {
+				Comandos.Error("RENAME", "Aún no se ha iniciado sesión con ningún usuario.")
+				return
+			} else {
+				//Comandos.ValidarDatosRENAME(tks)
+			}
+		} else if Comandos.Comparar(token, "COPY") {
+			fmt.Println("=*=*=*=*=*=*= FUNCION COPY =*=*=*=*=*=*=*=")
+			if !logued {
+				Comandos.Error("RENAME", "Aún no se ha iniciado sesión con ningún usuario.")
+				return
+			} else {
+				//Comandos.ValidarDatosCOPY(tks)
+			}
+		} else if Comandos.Comparar(token, "MOVE") {
+			fmt.Println("=*=*=*=*=*=*= FUNCION MOVE =*=*=*=*=*=*=*=")
+			if !logued {
+				Comandos.Error("RENAME", "Aún no se ha iniciado sesión con ningún usuario.")
+				return
+			} else {
+				//Comandos.ValidarDatosMOVE(tks)
+			}
+		} else if Comandos.Comparar(token, "FIND") {
+			fmt.Println("=*=*=*=*=*=*= FUNCION FIND =*=*=*=*=*=*=*=")
+			if !logued {
+				Comandos.Error("RENAME", "Aún no se ha iniciado sesión con ningún usuario.")
+				return
+			} else {
+				//Comandos.ValidarDatosFIND(tks)
+			}
+		} else if Comandos.Comparar(token, "CHMOD") {
+			fmt.Println("=*=*=*=*=*=*= FUNCION CHMOD =*=*=*=*=*=*=*=")
+			if !logued {
+				Comandos.Error("RENAME", "Aún no se ha iniciado sesión con ningún usuario.")
+				return
+			} else {
+				//Comandos.ValidarDatosCHMOD(tks)
+			}
+		} else if Comandos.Comparar(token, "CHGRP") {
+			fmt.Println("=*=*=*=*=*=*= FUNCION CHGRP =*=*=*=*=*=*=*=")
+			if !logued {
+				Comandos.Error("RENAME", "Aún no se ha iniciado sesión con ningún usuario.")
+				return
+			} else {
+				//Comandos.ValidarDatosCHGRP(tks)
+			}
+		} else if Comandos.Comparar(token, "CHOWN") {
+			fmt.Println("=*=*=*=*=*=*= FUNCION CHOWN =*=*=*=*=*=*=*=")
+			if !logued {
+				Comandos.Error("RENAME", "Aún no se ha iniciado sesión con ningún usuario.")
+				return
+			} else {
+				//Comandos.ValidarDatosCHOWN(tks)
 			}
 		} else {
 			Comandos.Error("ANALIZADOR", "No se reconoce el comando \""+token+"\"")

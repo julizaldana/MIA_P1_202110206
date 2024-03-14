@@ -169,6 +169,8 @@ func ext2(spr Structs.SuperBloque, p Structs.Particion, n int64, path string) {
 	fb.B_content[1].B_inodo = 0
 	copy(fb.B_content[2].B_name[:], "users.txt")
 	fb.B_content[2].B_inodo = 1
+	//copy(fb.B_content[3].B_name[:], "--")
+	//fb.B_content[3].B_inodo = 0
 
 	dataArchivo := "1,G,root\n1,U,root,root,123\n"
 	inodetmp := Structs.NewInodos()
