@@ -44,6 +44,8 @@ unmount -id=A206
 
 mkfs -type=full -id=A106
 
+mkfs -fs=3fs -id=A306
+
 pause
 
 #LOGIN, MKUSR, RMUSR, MKGRP, RMGRP
@@ -76,3 +78,4 @@ fdisk -type=L -unit=M -name=Part8 -size=5 -driveletter=A
 
 
 rep -id=A106 -path=/home/julio/Escritorio/MIA/disco.jpg -name=disk
+

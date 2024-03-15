@@ -337,8 +337,8 @@ func Exec(path string) {
 				fmt.Scanln(&pause)
 				continue
 			} else if string(texto[0]) == "#" {
-				fmt.Println("************************************** COMENTARIO **************************************")
-				Comandos.Mensaje("COMENTARIO", texto)
+				//fmt.Println("************************************** COMENTARIO **************************************")
+				//Comandos.Mensaje("COMENTARIO", texto)
 				continue
 			}
 			texto = strings.TrimLeft(texto, tk)

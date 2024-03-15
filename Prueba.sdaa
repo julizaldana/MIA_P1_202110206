@@ -1,0 +1,15 @@
+#ESTO ES UN COMENTARIO
+#execute -path=/home/julio/Escritorio/MIA-Proyecto1-2024/MIA_P1_202110206/Prueba.sdaa
+#MOUNT CARNET DE EJEMPLO 202110206
+#A106
+mount -driveletter=A -name=Part1
+
+#MKFS
+mkfs -type=full -id=A106
+
+#REP
+
+rep -id=A106 -path=/home/julio/Escritorio/MIA/Reportes/disco.jpg -name=disk
+rep -id=A106 -path=/users.txt -ruta=/home/julio/Escritorio/MIA/Reportes/usuarios.txt -name=file
+rep -id=A106 -path=/home/julio/Escritorio/MIA/Reportes/arbol.jpg -name=tree
+rep -id=A206 -path=/home/julio/Escritorio/MIA/Reportes/arboln.jpg -name=tree

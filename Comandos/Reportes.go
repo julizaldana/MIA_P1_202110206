@@ -5,8 +5,11 @@ import (
 	"bytes"
 	"encoding/binary"
 	"fmt"
+	"io/ioutil"
+	"log"
 	"math"
 	"os"
+	"os/exec"
 	"strconv"
 	"strings"
 	"unsafe"
@@ -47,17 +50,32 @@ func ValidarDatosREP(context []string) {
 		dks(path, id)
 	} else if Comparar(name, "TREE") {
 		tree(path, id)
+	} else if Comparar(name, "MBR") {
+		mbr(path, id)
+	} else if Comparar(name, "INODE") {
+		inoder(path, id)
+	} else if Comparar(name, "BLOCK") {
+		blockr(path, id)
+	} else if Comparar(name, "JOURNALING") {
+		journalr(path, id)
+	} else if Comparar(name, "SB") {
+		superblockr(path, id)
+	} else if Comparar(name, "BM_INODE") {
+		bminoder(path, id)
+	} else if Comparar(name, "BM_BLOCK") {
+		bmblockr(path, id)
 	} else if Comparar(name, "FILE") {
 		if ruta == "" {
 			Error("REP", "Se espera el parámetro ruta.")
 		}
-		//fileR(path, id, ruta)
+		fileR(path, id, ruta)
 	} else {
 		Error("REP", name+", no es un reporte válido.")
 		return
 	}
 }
 
+// REPORTE DISK
 func dks(p string, id string) {
 	var pth string
 	GetMount("REP", id, &pth)
@@ -225,31 +243,36 @@ func dks(p string, id string) {
 	content += tmplogic
 	content += "</table>>];\n}\n"
 
-	fmt.Println(content)
+	//fmt.Println(content)
 
-	/*
-		//CREAR IMAGEN
-		b := []byte(content)
-		err_ = ioutil.WriteFile(pd, b, 0644)
-		if err_ != nil {
-			log.Fatal(err_)
-		}
+	//CREAR IMAGEN
+	b := []byte(content)
+	err_ = ioutil.WriteFile(pd, b, 0644)
+	if err_ != nil {
+		log.Fatal(err_)
+	}
 
-		terminacion := strings.Split(p, ".")
+	terminacion := strings.Split(p, ".")
 
-		path, _ := exec.LookPath("dot")
-		cmd, _ := exec.Command(path, "-T"+terminacion[1], pd).Output()
-		node := int(0777)
-		ioutil.WriteFile(p, cmd, os.FileMode(node))
-		disco := strings.Split(pth, "/")
-		Mensaje("REP", "Reporte tipo DISK del disco "+disco[len(disco)-1]+",creado correctamente")
-	*/
+	path, _ := exec.LookPath("dot")
+	cmd, _ := exec.Command(path, "-T"+terminacion[1], pd).Output()
+	node := int(0777)
+	ioutil.WriteFile(p, cmd, os.FileMode(node))
+	disco := strings.Split(pth, "/")
+	Mensaje("REP", "Reporte tipo DISK del disco "+disco[len(disco)-1]+",creado correctamente")
+
 }
 
+// REPORTE MBR Y EBR
+func mbr(p string, id string) {
+	//
+}
+
+// REPORTE TREE
 func tree(p string, id string) {
 	var pth string
 	spr := Structs.NewSuperBloque()
-	inode := Structs.NewInodos()
+	inodo := Structs.NewInodos()
 	partition := GetMount("REP", id, &pth)
 
 	if partition.Part_start == -1 {
@@ -275,7 +298,7 @@ func tree(p string, id string) {
 	file.Seek(spr.S_inode_start, 0)
 	data = leerBytes(file, int(unsafe.Sizeof(Structs.Inodos{})))
 	buffer = bytes.NewBuffer(data)
-	err_ = binary.Read(buffer, binary.BigEndian, &spr)
+	err_ = binary.Read(buffer, binary.BigEndian, &inodo)
 	if err_ != nil {
 		Error("REP", "Error al leer el archivo")
 		return
@@ -301,58 +324,227 @@ func tree(p string, id string) {
 		fileaux.Close()
 	}
 
-	content := "digraph G{\n rankdir=LR;\n graph [ dpi = \"608\" ]; \n  forcelabels=true; \n node { shape = plaintext};\n "
+	content := "digraph G{\n rankdir=LR;\n graph [ dpi = \"600\" ]; \n  forcelabels=true; \n node [shape = plaintext];\n "
 	for i := 0; i < int(freeI); i++ {
-		atime := arregloString(inode.I_atime)
-		ctime := arregloString(inode.I_ctime)
-		mtime := arregloString(inode.I_mtime)
+		atime := arregloString(inodo.I_atime)
+		ctime := arregloString(inodo.I_ctime)
+		mtime := arregloString(inodo.I_mtime)
 		content += " inode" + strconv.Itoa(i) + " [label = <<table>\n" +
-			"<tr><td COLSPAN = '2'>" +
+			"<tr><td COLSPAN = '2' BGCOLOR=\"#000060\" >" +
 			"<font color=\"white\"> INODO " + strconv.Itoa(i) + "</font>" +
 			"</td></tr>\n" +
-			"<tr><td>NOMBRE</td><td>VALOR</td></tr>\n" +
-			"<tr><td>i_uid</td><td>" + strconv.Itoa(int(inode.I_uid)) + "</td></tr>\n" +
-			"<tr><td>i_gid</td><td>" + strconv.Itoa(int(inode.I_gid)) + "</td></tr>\n" +
-			"<tr><td>i_size</td><td>" + strconv.Itoa(int(inode.I_s)) + "</td></tr>\n" +
-			"<tr><td>i_atime</td>" + atime + "<td>VALOR</td></tr>\n" +
-			"<tr><td>i_ctime</td>" + ctime + "<td>VALOR</td></tr>\n" +
-			"<tr><td>i_mtime</td>" + mtime + "<td>VALOR</td></tr>\n"
+			"<tr><td BGCOLOR=\"#87CEFA\">NOMBRE</td><td BGCOLOR=\"#87CEFA\">VALOR</td></tr>\n" +
+			"<tr><td>i_uid</td><td>" + strconv.Itoa(int(inodo.I_uid)) + "</td></tr>\n" +
+			"<tr><td>i_gid</td><td>" + strconv.Itoa(int(inodo.I_gid)) + "</td></tr>\n" +
+			"<tr><td>i_size</td><td>" + strconv.Itoa(int(inodo.I_s)) + "</td></tr>\n" +
+			"<tr><td>i_atime</td><td>" + atime + "</td></tr>\n" +
+			"<tr><td>i_ctime</td><td>" + ctime + "</td></tr>\n" +
+			"<tr><td>i_mtime</td><td>" + mtime + "</td></tr>\n"
 		for j := 0; j < 16; j++ {
-			content += "<tr=\n<td>i_block " + strconv.Itoa(j+1) + "</td><td port=\"" + strconv.Itoa(j) + "\">" + strconv.Itoa(int(inode.I_block[j])) + "</td></tr>\n"
+			content += "<tr>\n<td>i_block" + strconv.Itoa(j+1) + "</td><td port=\"" + strconv.Itoa(j) + "\">" + strconv.Itoa(int(inodo.I_block[j])) + "</td></tr>\n"
 		}
-		content += "<tr><td>i_type</td><td>" + strconv.Itoa(int(inode.I_type)) + "</td></tr>\n" +
-			"<tr><td>i_perm</td><td>" + strconv.Itoa(int(inode.I_perm)) + "</td></tr>"
-	}
+		content += "<tr><td>i_type</td><td>" + strconv.Itoa(int(inodo.I_type)) + "</td></tr>\n" +
+			"<tr><td>i_perm</td><td>" + strconv.Itoa(int(inodo.I_perm)) + "</td></tr></table>>];\n"
 
-	if inode.I_type == 0 {
-		for j := 0; j < 16; j++ {
-			if inode.I_block[j] != -1 {
-				bloquesUsados = append(bloquesUsados, inode.I_block[j])
-				contadorBloques++
-				if existeEnArreglo(bloquesUsados, inode.I_block[j]) == 1 {
-					foldertmp := Structs.BloquesCarpetas{}
+		if inodo.I_type == 0 {
+			for j := 0; j < 16; j++ {
+				if inodo.I_block[j] != -1 {
+					bloquesUsados = append(bloquesUsados, inodo.I_block[j])
+					contadorBloques++
+					if existeEnArreglo(bloquesUsados, inodo.I_block[j]) == 1 {
+						foldertmp := Structs.BloquesCarpetas{}
 
-					file.Seek(spr.S_block_start+int64(unsafe.Sizeof(Structs.BloquesCarpetas{}))*inode.I_block[j]*int64(unsafe.Sizeof(Structs.BloquesArchivos{}))*32*inode.I_block[j], 0)
-					data = leerBytes(file, int(unsafe.Sizeof(Structs.BloquesCarpetas{})))
-					buffer = bytes.NewBuffer(data)
-					err_ = binary.Read(buffer, binary.BigEndian, &foldertmp)
+						file.Seek(spr.S_block_start+int64(unsafe.Sizeof(Structs.BloquesCarpetas{}))*inodo.I_block[j]*int64(unsafe.Sizeof(Structs.BloquesArchivos{}))*32*inodo.I_block[j], 0)
+						data = leerBytes(file, int(unsafe.Sizeof(Structs.BloquesCarpetas{})))
+						buffer = bytes.NewBuffer(data)
+						err_ = binary.Read(buffer, binary.BigEndian, &foldertmp)
 
-					if err_ != nil {
-						Error("MKDIR", "Error al leer el archivo")
-						return
+						if err_ != nil {
+							Error("MKDIR", "Error al leer el archivo")
+							return
+						}
+
+						if foldertmp.B_content[j].B_inodo == -1 {
+							continue
+						}
+						content += "inode" + strconv.Itoa(j) + ":" + strconv.Itoa(j) + "-> BLOCK" + strconv.Itoa(contadorBloques) + "_" + strconv.Itoa(int(inodo.I_block[j])) + "\n"
+
+						content += "BLOCK" + strconv.Itoa(contadorBloques) + "_" + strconv.Itoa(int(inodo.I_block[j])) +
+							" [label = <<table><tr><td COLSPAN = '2' BGCOLOR=\"#145A32\"><font color=\"white\">BLOCK" + strconv.Itoa(int(inodo.I_block[j])) + "</font>" +
+							"</td></tr>\n" + "<tr><td BGCOLOR=\"#90EE90\"> B_NAME </td><td BGCOLOR=\"#90EE90\"> B_INODE </td></tr>\n"
+
+						for k := 0; k < 4; k++ {
+							ctmp := ""
+							for name := 0; name < len(foldertmp.B_content[k].B_name); name++ {
+								if foldertmp.B_content[k].B_name[name] != 0 {
+									ctmp += string(foldertmp.B_content[k].B_name[name])
+								}
+							}
+							content += "<tr><td>" + ctmp + "</td><td port=\"" + strconv.Itoa(k) + "\">" + strconv.Itoa(int(foldertmp.B_content[k].B_inodo)) + "</td></tr>\n"
+						}
+
+						content += "</table>>];\n"
+
+						for b := 0; b < 4; b++ {
+							if foldertmp.B_content[b].B_inodo != -1 {
+								ctmp := ""
+								for name := 0; name < len(foldertmp.B_content[b].B_name); name++ {
+									if foldertmp.B_content[b].B_name[name] != 0 {
+										ctmp += string(foldertmp.B_content[b].B_name[name])
+									}
+								}
+								if ctmp != "." && ctmp != ".." {
+									content += "BLOCK" + strconv.Itoa(contadorBloques) + "_" + strconv.Itoa(int(inodo.I_block[j])) + ":" + strconv.Itoa(b) + "-> inode" + strconv.Itoa(b-1) + ";"
+								}
+							}
+						}
 					}
-
-					if foldertmp.B_content[j].B_inodo == -1 {
-						continue
-					}
-					content += "inode; " + strconv.Itoa(j) + ":" + strconv.Itoa(j) + "-> BLOCK" + strconv.Itoa(contadorBloques) + "_" + strconv.Itoa(int(inode.I_block[j])) + "\n"
-					content += "cont" + strconv.Itoa(contadorBloques) + "_" + strconv.Itoa(int(inode.I_block[j]))
-
 				}
 			}
+		} else {
+			for j := 0; j < 16; j++ {
+				if inodo.I_block[j] != -1 {
+					if j < 16 {
+						var contador int64 = 0
+						var posicion int
+						for {
+							foldertmp := Structs.NewBloquesCarpetas()
+							file.Seek(spr.S_block_start+int64(unsafe.Sizeof(Structs.BloquesCarpetas{}))*contador*int64(unsafe.Sizeof(Structs.BloquesArchivos{}))*32*contador, 0)
+							data = leerBytes(file, int(unsafe.Sizeof(Structs.BloquesCarpetas{})))
+							buffer = bytes.NewBuffer(data)
+							err_ = binary.Read(buffer, binary.BigEndian, &foldertmp)
 
+							if err_ != nil {
+								Error("REP", "No se pudo leer el archivo")
+								return
+							}
+							salir := false
+							for l := 0; l < 4; l++ {
+								if foldertmp.B_content[l].B_inodo == inodo.I_block[l] {
+									posicion = l
+									salir = true
+									break
+								}
+							}
+							if salir {
+								break
+							}
+							contador++
+						}
+						if posicion == 2 || posicion == 0 {
+							file.Seek(spr.S_block_start+int64(unsafe.Sizeof(Structs.BloquesCarpetas{}))*contador+int64(unsafe.Sizeof(Structs.BloquesArchivos{}))*32*contador+int64(unsafe.Sizeof(Structs.Inodos{}))*contador, 0)
+							for k := 0; k < 16; k++ {
+								contadorArchivos++
+								if inodo.I_block[k] == -1 {
+									break
+								}
+								content += "inodo" + strconv.Itoa(i) + ":" + strconv.Itoa(k) + " -> FILE" + strconv.Itoa(contadorArchivos) + "_" + strconv.Itoa(int(inodo.I_block[k])) + "\n"
+								filetmp := Structs.BloquesArchivos{}
+								data = leerBytes(file, int(unsafe.Sizeof(Structs.BloquesArchivos{})))
+								buffer = bytes.NewBuffer(data)
+								err_ = binary.Read(buffer, binary.BigEndian, &filetmp)
+								if err_ != nil {
+									Error("REP", "Error al leer el archivo")
+									return
+								}
+
+								contenido := ""
+								for arch := 0; arch < len(filetmp.B_content); arch++ {
+									if filetmp.B_content[arch] != 0 {
+										contenido += string(filetmp.B_content[arch])
+									}
+								}
+								content += "FILE" + strconv.Itoa(contadorArchivos) + "_" + strconv.Itoa(int(inodo.I_block[k])) + " [label = <<table> <tr><td COLSPAN = '2' BGCOLOR=\"#CCCC00\"> FILE" + strconv.Itoa(int(inodo.I_block[k])) +
+									"</td></tr><tr><td COLSPAN ='2'>" + contenido + "</td></tr>\n</table>>];\n"
+							}
+						} else if posicion == 1 {
+							file.Seek(spr.S_block_start+int64(unsafe.Sizeof(Structs.BloquesCarpetas{}))*contador*int64(unsafe.Sizeof(Structs.BloquesArchivos{}))*32*contador*int64(unsafe.Sizeof(inodo.I_block[j])), 0)
+							for k := 0; k < 16; k++ {
+								contadorArchivos++
+								if inodo.I_block[k] == -1 {
+									break
+								}
+								content += "inodo" + strconv.Itoa(k) + ":" + strconv.Itoa(k) + "-> FILE" + strconv.Itoa(contadorArchivos) + "_" + strconv.Itoa(int(inodo.I_block[k])) + "\n"
+								filetmp := Structs.BloquesArchivos{}
+								datas := leerBytes(file, int(unsafe.Sizeof(Structs.BloquesArchivos{})))
+								buffer = bytes.NewBuffer(datas)
+								err_ = binary.Read(buffer, binary.BigEndian, &filetmp)
+								if err_ != nil {
+									Error("REP", "No se pudo abrir el archivo")
+									return
+								}
+
+								contenido := ""
+								for arch := 0; arch < len(filetmp.B_content); arch++ {
+									if filetmp.B_content[arch] != 0 {
+										contenido += string(filetmp.B_content[arch])
+									}
+								}
+								content += "FILE" + strconv.Itoa(contadorArchivos) + "_" + strconv.Itoa(int(inodo.I_block[k])) + " [ label = <<table> <tr><td COLSPAN = '2' BGCOLOR=\"#CCCC00\">" +
+									"FILE " + strconv.Itoa(int(inodo.I_block[k])) + "</td></tr>\n" + "<tr><td COLSPAN = '2'>" + contenido + "</td></tr>\n</table>>];\n"
+
+							}
+						}
+						break
+					}
+				} else {
+					break
+				}
+			}
+		}
+		file.Seek(spr.S_inode_start+int64(unsafe.Sizeof(Structs.Inodos{}))*int64(i+1), 0)
+		data = leerBytes(file, int(unsafe.Sizeof(Structs.Inodos{})))
+		buffer = bytes.NewBuffer(data)
+		err_ = binary.Read(buffer, binary.BigEndian, &inodo)
+		if err_ != nil {
+			Error("REP", "Error al leer el archivo")
+			return
 		}
 	}
+	file.Close()
+	content += "\n\n}\n"
+
+	fmt.Println(content)
+
+	/*
+		b := []byte(content)
+		err_ = ioutil.WriteFile(pd, b, 0644)
+		if err_ != nil {
+			log.Fatal(err_)
+		}
+
+		terminacion := strings.Split(p, ".")
+
+		path, _ := exec.LookPath("dot")
+		cmd, _ := exec.Command(path, "-T"+terminacion[1], pd).Output()
+		node := int(0777)
+		ioutil.WriteFile(p, cmd, os.FileMode(node))
+		disco := strings.Split(pth, "/")
+		Mensaje("REP", "Reporte tipo TREE del disco "+disco[len(disco)-1]+",creado correctamente")
+	*/
+}
+
+func inoder(p string, id string) {
+
+}
+
+func blockr(p string, id string) {
+
+}
+
+func journalr(p string, id string) {
+
+}
+
+func superblockr(p string, id string) {
+
+}
+
+func bminoder(p string, id string) {
+
+}
+
+func bmblockr(p string, id string) {
 
 }
 
@@ -393,17 +585,15 @@ func fileR(p string, id string, ruta string) {
 		fileaux.Close()
 	}
 
-	/*
-		var path string
-		particion := GetMount("MKDIR", id, &path)
-		tmp := GetPath(ruta)
-		data := getDataFile(tmp, particion, path)
-		b := []byte(data)
-		err_ := ioutil.WriteFile(p, b, 0644)
-		if err_ != nil {
-			log.Fatal(err_)
-		}
-	*/
+	var path string
+	particion := GetMount("MKDIR", id, &path)
+	tmp := GetPath(ruta)
+	data := getDataFile(tmp, particion, path)
+	b := []byte(data)
+	err_ := ioutil.WriteFile(p, b, 0644)
+	if err_ != nil {
+		log.Fatal(err_)
+	}
 
 	archivo := strings.Split(ruta, "/")
 	Mensaje("REP", "Reporte tipo FILE del archivo"+archivo[len(archivo)-1]+"creado correctamente!")
@@ -465,16 +655,15 @@ func GetPath(path string) []string {
 	return result
 }
 
-/*
-func getDataFile(path []string, particion Structs.Particion, pth string) {
+func getDataFile(path []string, particion Structs.Particion, pth string) string {
 	spr := Structs.NewSuperBloque()
-	inode := Structs.NewInodos()
+	inodo := Structs.NewInodos()
 	folder := Structs.NewBloquesCarpetas()
 	file, err := os.Open(strings.ReplaceAll(pth, "\"", ""))
 
 	if err != nil {
 		Error("REP", "No se ha encontrado el disco.")
-		return
+		return ""
 	}
 	file.Seek(particion.Part_start, 0)
 	data := leerBytes(file, int(unsafe.Sizeof(Structs.SuperBloque{})))
@@ -482,26 +671,119 @@ func getDataFile(path []string, particion Structs.Particion, pth string) {
 	err_ := binary.Read(buffer, binary.BigEndian, &spr)
 	if err_ != nil {
 		Error("REP", "Error al leer el archivo")
-		return
+		return ""
 	}
 
 	file.Seek(spr.S_inode_start, 0)
 	data = leerBytes(file, int(unsafe.Sizeof(Structs.Inodos{})))
 	buffer = bytes.NewBuffer(data)
-	err_ = binary.Read(buffer, binary.BigEndian, &inode)
+	err_ = binary.Read(buffer, binary.BigEndian, &inodo)
 	if err_ != nil {
 		Error("REP", "Error al leer el archivo")
-		return
+		return ""
 	}
 
-	if (path) == 0 {
-		Error("REP", "No se ha ")
+	if len(path) == 0 {
+		Error("REP", "No se ha encontrar una ruta o path valido ")
+		return ""
 	}
 
-	var dua []string
-	for i := 0; i < len[path]; i++ {
-		aup
+	var aux []string
+	for i := 0; i < len(path); i++ {
+		aux = append(aux, path[i])
 	}
+	path = aux
 
+	for v := 0; v < len(path); v++ {
+		for i := 0; i < 16; i++ {
+			if i < 16 {
+				if inodo.I_block[i] != -1 {
+					folderc := Structs.BloquesCarpetas{}
+					file.Seek(spr.S_block_start+int64(unsafe.Sizeof(Structs.BloquesCarpetas{}))*inodo.I_block[i]*int64(unsafe.Sizeof(Structs.BloquesArchivos{}))*32*inodo.I_block[i], 0)
+
+					data = leerBytes(file, int(unsafe.Sizeof(Structs.BloquesCarpetas{})))
+					buffer = bytes.NewBuffer(data)
+					err_ = binary.Read(buffer, binary.BigEndian, &folderc)
+					if err_ != nil {
+						Error("REP", "Error al abrir el archivo")
+					}
+
+					for j := 0; j < 4; j++ {
+						nombreFIle := ""
+						for name := 0; name < len(folder.B_content[j].B_name); name++ {
+							if folder.B_content[j].B_name[name] == 0 {
+								continue
+							}
+							nombreFIle += string(folder.B_content[j].B_name[name])
+						}
+						if Comparar(nombreFIle, path[v]) {
+							inodeAux := inodo
+							inodo = Structs.NewInodos()
+							file.Seek(spr.S_inode_start+int64(unsafe.Sizeof(Structs.Inodos{}))*folder.B_content[j].B_inodo, 0)
+
+							data = leerBytes(file, int(unsafe.Sizeof(Structs.Inodos{})))
+							buffer = bytes.NewBuffer(data)
+							err_ = binary.Read(buffer, binary.BigEndian, &inodo)
+							if err_ != nil {
+								Error("REP", "Error al leer el archivo")
+								return ""
+							}
+
+							if inodo.I_type == 1 && nombreFIle == path[len(path)-1] {
+								if j == 2 {
+									archivo := Structs.BloquesArchivos{}
+									contenido := ""
+									for k := 0; k < 16; k++ {
+										file.Seek(spr.S_block_start+int64(unsafe.Sizeof(Structs.BloquesCarpetas{}))*inodeAux.I_block[i]+int64(unsafe.Sizeof(Structs.BloquesArchivos{}))*32*inodo.I_block[i], 0)
+										if inodo.I_block[k] == -1 {
+											break
+										}
+										data = leerBytes(file, int(unsafe.Sizeof(Structs.BloquesArchivos{})))
+										buffer = bytes.NewBuffer(data)
+										err_ = binary.Read(buffer, binary.BigEndian, &archivo)
+
+										for l := 0; l < len(archivo.B_content[:]); l++ {
+											if archivo.B_content[l] != 0 {
+												contenido += string(archivo.B_content[l])
+											}
+										}
+									}
+
+									if nombreFIle == path[len(path)-1] {
+										return contenido
+									}
+
+								} else if j == 3 {
+									archivo := Structs.BloquesArchivos{}
+									contenido := ""
+									for k := 0; k < 16; k++ {
+										file.Seek(spr.S_block_start+int64(unsafe.Sizeof(Structs.BloquesCarpetas{}))*inodeAux.I_block[i]+int64(unsafe.Sizeof(Structs.BloquesArchivos{}))*32*inodo.I_block[i], 0)
+										if inodo.I_block[k] == -1 {
+											break
+										}
+										data = leerBytes(file, int(unsafe.Sizeof(Structs.BloquesArchivos{})))
+										buffer = bytes.NewBuffer(data)
+										err_ = binary.Read(buffer, binary.BigEndian, &archivo)
+
+										for l := 0; l < len(archivo.B_content); l++ {
+											if archivo.B_content[l] != 0 {
+												contenido += string(archivo.B_content[l])
+											}
+										}
+									}
+									if nombreFIle == path[len(path)-1] {
+										return contenido
+									}
+								}
+							}
+							break
+						}
+					}
+				} else {
+					break
+				}
+			}
+		}
+	}
+	return ""
 }
-*/

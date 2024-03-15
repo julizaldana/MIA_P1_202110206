@@ -183,8 +183,8 @@ func GetMount(comando string, id string, p *string) Structs.Particion {
 					}
 
 					// Abrir el archivo del disco
-					file, error := os.Open(strings.ReplaceAll(path, "\"", ""))
-					if error != nil {
+					file, erro := os.Open(strings.ReplaceAll(path, "\"", ""))
+					if erro != nil {
 						Error(comando, "No se ha encontrado el disco")
 						return Structs.Particion{}
 					}
