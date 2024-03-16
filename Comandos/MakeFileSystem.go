@@ -16,30 +16,44 @@ import (
 func ValidarDatosMKFS(context []string) {
 	tipo := "full"
 	id := ""
-	//fs := "" //Verificar si es ext2 o ext3
+	fs := "" // Variable para almacenar el tipo de sistema de archivos
+
 	for i := 0; i < len(context); i++ {
 		current := context[i]
 		comando := strings.Split(current, "=")
-		if Comparar(comando[0], "id") {
+
+		switch comando[0] {
+		case "id":
 			id = comando[1]
-		} else if Comparar(comando[0], "type") {
+		case "type":
 			if Comparar(comando[1], "full") {
 				tipo = comando[1]
 			} else {
 				Error("MKFS", "El comando type debe tener valores especificos")
 				return
 			}
-		} //else if Comparar(comando[0], "fs") { //ext2 o ext3
-		//fs = comando[1]
-		//}
-	}
-	if id == "" {
-		Error("MKFS", "El comando MKFS requiere un id para poder ser ejecutado.")
-		return
-	} else {
-		crearFileSystem(id, tipo)
+		case "fs":
+			fs = comando[1]
+		default:
+			Error("MKFS", "Parámetro no reconocido para mkfs")
+			return
+		}
 	}
 
+	if id == "" {
+		Error("MKFS", "El comando MKFS requiere un id de particion para poder formatear.")
+		return
+	}
+
+	// Determinar el tipo de sistema de archivos
+	if fs == "" || fs == "2fs" {
+		crearFileSystem2(id, tipo)
+	} else if fs == "3fs" {
+		crearFileSystem3(id, tipo)
+	} else {
+		Error("MKFS", "Tipo de sistema de archivos no es válido, se admite 2fs/3fs para EXT2/EXT3")
+		return
+	}
 }
 
 // CREAR UN SISTEMA DE ARCHIVOS EXT2 POR DEFECTO

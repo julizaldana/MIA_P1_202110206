@@ -695,24 +695,22 @@ func tree(p string, id string) {
 	file.Close()
 	content += "\n\n}\n"
 
-	fmt.Println(content)
+	//fmt.Println(content)
 
-	/*
-		b := []byte(content)
-		err_ = ioutil.WriteFile(pd, b, 0644)
-		if err_ != nil {
-			log.Fatal(err_)
-		}
+	b := []byte(content)
+	err_ = ioutil.WriteFile(pd, b, 0644)
+	if err_ != nil {
+		log.Fatal(err_)
+	}
 
-		terminacion := strings.Split(p, ".")
+	terminacion := strings.Split(p, ".")
 
-		path, _ := exec.LookPath("dot")
-		cmd, _ := exec.Command(path, "-T"+terminacion[1], pd).Output()
-		node := int(0777)
-		ioutil.WriteFile(p, cmd, os.FileMode(node))
-		disco := strings.Split(pth, "/")
-		Mensaje("REP", "Reporte tipo TREE del disco "+disco[len(disco)-1]+",creado correctamente")
-	*/
+	path, _ := exec.LookPath("dot")
+	cmd, _ := exec.Command(path, "-T"+terminacion[1], pd).Output()
+	node := int(0777)
+	ioutil.WriteFile(p, cmd, os.FileMode(node))
+	Mensaje("REP", "Reporte tipo TREE para el filesystem de la particion "+id+",creado correctamente")
+
 }
 
 func inoder(p string, id string) {
@@ -723,11 +721,159 @@ func blockr(p string, id string) {
 
 }
 
+// REPORTE JOURNALING
 func journalr(p string, id string) {
+	var pth string
+	partition := GetMount("REP", id, &pth)
+
+	//file
+	file, err := os.Open(strings.ReplaceAll(pth, "\"", ""))
+
+	if err != nil {
+		Error("REP", "No se ha encontrado el disco.")
+		return
+	}
+	journal := Structs.NewJournaling()
+	file.Seek(partition.Part_start+int64(unsafe.Sizeof(Structs.SuperBloque{})), 0)
+	data := leerBytes(file, int(unsafe.Sizeof(Structs.Journaling{})))
+	buffer := bytes.NewBuffer(data)
+	err_ := binary.Read(buffer, binary.BigEndian, &journal)
+	if err_ != nil {
+		Error("REP", "Error al leer el archivo")
+		return
+	}
+	file.Close()
+
+	aux := strings.Split(p, ".")
+	if len(aux) > 2 {
+		Error("REP", "No se admiten nombres de archivos que contengan punto (.)")
+		return
+	}
+	pd := aux[0] + ".dot"
+
+	carpeta := ""
+	direccion := strings.Split(pd, "/")
+
+	fileaux, _ := os.Open(strings.ReplaceAll(pd, "\"", ""))
+	if fileaux == nil {
+		for i := 0; i < len(direccion); i++ {
+			carpeta += "/" + direccion[i]
+			if _, err_2 := os.Stat(carpeta); os.IsNotExist(err_2) {
+				os.Mkdir(carpeta, 0777)
+			}
+		}
+		os.Remove(pd)
+	} else {
+		fileaux.Close()
+	}
+
+	content := "digraph G {\n  node0 [shape=none label=<\n  <TABLE style=\"rounded\" bgcolor=\" #d5f2e9 \">\n  <TR>\n  <TD COLSPAN = '4' bgcolor=\"  #badbb8 \">REPORTE DE JOURNALING</TD>\n  </TR>\n" +
+		"<TR>\n<TD bgcolor=\"  #dceddb  \">operacion</TD>\n  <TD bgcolor=\"  #dceddb \">path</TD>\n    <TD bgcolor=\"  #dceddb \">contenido</TD>\n      <TD bgcolor=\"  #dceddb \">fecha</TD>\n  </TR>\n " +
+		" <TR>\n<TD bgcolor=\"  #dceddb  \"> " + string(journal.J_operacion[:]) + "</TD>\n  <TD bgcolor=\"  #dceddb \">" + string(journal.J_path[:]) + "</TD>\n    <TD bgcolor=\"  #dceddb \">" + string(journal.J_content[:]) + "</TD>\n      <TD bgcolor=\"  #dceddb \">" + string(journal.J_fecha[:]) + "</TD>\n  </TR>\n  \n    </TABLE>>];\n\n}\n"
+
+	//fmt.Println(content)
+
+	//CREAR IMAGEN
+	b := []byte(content)
+	err_ = ioutil.WriteFile(pd, b, 0644)
+	if err_ != nil {
+		log.Fatal(err_)
+	}
+
+	terminacion := strings.Split(p, ".")
+
+	path, _ := exec.LookPath("dot")
+	cmd, _ := exec.Command(path, "-T"+terminacion[1], pd).Output()
+	node := int(0777)
+	ioutil.WriteFile(p, cmd, os.FileMode(node))
+	Mensaje("REP", "Reporte tipo JOURNALING para la particion "+id+", creado correctamente")
 
 }
 
+// REPORTE SUPERBLOQUE
 func superblockr(p string, id string) {
+	var pth string
+	partition := GetMount("REP", id, &pth)
+
+	//file
+	file, err := os.Open(strings.ReplaceAll(pth, "\"", ""))
+
+	if err != nil {
+		Error("REP", "No se ha encontrado el disco.")
+		return
+	}
+	super := Structs.NewSuperBloque()
+	file.Seek(partition.Part_start, 0)
+	data := leerBytes(file, int(unsafe.Sizeof(Structs.SuperBloque{})))
+	buffer := bytes.NewBuffer(data)
+	err_ := binary.Read(buffer, binary.BigEndian, &super)
+	if err_ != nil {
+		Error("REP", "Error al leer el archivo")
+		return
+	}
+	file.Close()
+
+	aux := strings.Split(p, ".")
+	if len(aux) > 2 {
+		Error("REP", "No se admiten nombres de archivos que contengan punto (.)")
+		return
+	}
+	pd := aux[0] + ".dot"
+
+	carpeta := ""
+	direccion := strings.Split(pd, "/")
+
+	fileaux, _ := os.Open(strings.ReplaceAll(pd, "\"", ""))
+	if fileaux == nil {
+		for i := 0; i < len(direccion); i++ {
+			carpeta += "/" + direccion[i]
+			if _, err_2 := os.Stat(carpeta); os.IsNotExist(err_2) {
+				os.Mkdir(carpeta, 0777)
+			}
+		}
+		os.Remove(pd)
+	} else {
+		fileaux.Close()
+	}
+	ultfecha := strings.TrimRight(string(super.S_umtime[:]), "\x00")
+	//mbrTamanoStr := strconv.FormatFloat(float64(disk.Mbr_tamano), 'f', -1, 64)
+	content := "digraph G {\n  node0 [shape=none label=<\n  <TABLE style=\"rounded\" bgcolor=\" #d5f2e9 \">\n  <TR>\n  <TD COLSPAN = '2' bgcolor=\"  #9bf597 \">REPORTE DE SUPERBLOQUE</TD>\n  </TR>\n  <TR>\n" +
+		"<TD bgcolor=\" #cff5e5 \">spr_filesystem_type</TD>\n  <TD bgcolor=\" #cff5e5 \">" + strconv.Itoa(int(super.S_filesystem_type)) + "</TD>\n  </TR>\n  <TR>\n " +
+		"<TD bgcolor=\" #cff5e5 \">spr_inodes_count</TD>\n  <TD bgcolor=\" #cff5e5 \">" + strconv.Itoa(int(super.S_inodes_count)) + "</TD>\n  </TR>\n  <TR>\n" +
+		"<TD bgcolor=\" #cff5e5 \">spr_blocks_count</TD>\n  <TD bgcolor=\" #cff5e5 \">" + strconv.Itoa(int(super.S_blocks_count)) + "</TD>\n  </TR>\n  <TR>\n  " +
+		"<TD bgcolor=\" #cff5e5 \">spr_free_inodes_count</TD>\n  <TD bgcolor=\" #cff5e5 \">" + strconv.Itoa(int(super.S_free_blocks_count)) + "</TD>\n  </TR>\n" +
+		"<TR>\n  <TD bgcolor=\" #cff5e5 \">spr_free_blocks_count</TD>\n  <TD bgcolor=\" #cff5e5 \">" + strconv.Itoa(int(super.S_free_blocks_count)) + "</TD>\n  </TR>\n " +
+		"<TR>\n  <TD bgcolor=\" #cff5e5 \">spr_mtime</TD>\n  <TD bgcolor=\" #cff5e5 \">" + string(super.S_mtime[:]) + "</TD>\n  </TR>\n" +
+		"<TR>\n  <TD bgcolor=\" #cff5e5 \">sptr_umtime</TD>\n  <TD bgcolor=\" #cff5e5 \">" + ultfecha + "</TD>\n  </TR>\n " +
+		"<TR>\n  <TD bgcolor=\" #cff5e5 \">spr_mnt_count</TD>\n  <TD bgcolor=\" #cff5e5 \">" + strconv.Itoa(int(super.S_mnt_count)) + "</TD>\n  </TR>\n " +
+		"<TR>\n  <TD bgcolor=\" #cff5e5 \">spr_magic</TD>\n  <TD bgcolor=\" #cff5e5 \">" + strconv.Itoa(int(super.S_magic)) + "</TD>\n  </TR>\n" +
+		"<TR>\n  <TD bgcolor=\" #cff5e5 \">spr_inode_s</TD>\n  <TD bgcolor=\" #cff5e5 \">" + strconv.Itoa(int(super.S_inode_s)) + "</TD>\n  </TR>\n " +
+		"<TR>\n  <TD bgcolor=\" #cff5e5 \">spr_block_s</TD>\n  <TD bgcolor=\" #cff5e5 \">" + strconv.Itoa(int(super.S_block_s)) + "</TD>\n  </TR>\n  " +
+		"<TR>\n  <TD bgcolor=\" #cff5e5 \">spr_first_ino</TD>\n  <TD bgcolor=\" #cff5e5 \">" + strconv.Itoa(int(super.S_first_ino)) + "</TD>\n  </TR>\n   " +
+		"<TR>\n  <TD bgcolor=\" #cff5e5 \">spr_first_blo</TD>\n  <TD bgcolor=\" #cff5e5 \">" + strconv.Itoa(int(super.S_first_blo)) + "</TD>\n  </TR>\n    " +
+		"<TR>\n  <TD bgcolor=\" #cff5e5 \">spr_bm_inode_start</TD>\n  <TD bgcolor=\" #cff5e5 \">" + strconv.Itoa(int(super.S_bm_inode_start)) + "</TD>\n  </TR>\n  " +
+		" <TR>\n  <TD bgcolor=\" #cff5e5 \">spr_bm_block_start</TD>\n  <TD bgcolor=\" #cff5e5 \">" + strconv.Itoa(int(super.S_bm_block_start)) + "</TD>\n  </TR>\n   " +
+		"<TR>\n  <TD bgcolor=\" #cff5e5 \">spr_inode_start</TD>\n  <TD bgcolor=\" #cff5e5 \">" + strconv.Itoa(int(super.S_inode_start)) + "</TD>\n  </TR>\n  " +
+		"<TR>\n  <TD bgcolor=\" #cff5e5 \">spr_block_start</TD>\n  <TD bgcolor=\" #cff5e5 \">" + strconv.Itoa(int(super.S_block_start)) + "</TD>\n  </TR>"
+
+	content += "</TABLE>>];\n\n}"
+
+	//fmt.Println(content)
+
+	//CREAR IMAGEN
+	b := []byte(content)
+	err_ = ioutil.WriteFile(pd, b, 0644)
+	if err_ != nil {
+		log.Fatal(err_)
+	}
+
+	terminacion := strings.Split(p, ".")
+
+	path, _ := exec.LookPath("dot")
+	cmd, _ := exec.Command(path, "-T"+terminacion[1], pd).Output()
+	node := int(0777)
+	ioutil.WriteFile(p, cmd, os.FileMode(node))
+	Mensaje("REP", "Reporte tipo SUPERBLOQUE para la particion "+id+", creado correctamente")
 
 }
 

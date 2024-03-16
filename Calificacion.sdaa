@@ -83,4 +83,10 @@ rep -id=A106 -path=/home/julio/Escritorio/MIA/Reportes/disco.jpg -name=disk
 rep -id=A106 -path=/home/julio/Escritorio/MIA/Reportes/mbr.jpg -name=mbr
 
 #A106
-mount -driveletter=A -name=Part1
+mount -driveletter=A -name=Part2
+
+rep -id=A106 -path=/home/julio/Escritorio/MIA/Reportes/superblock.jpg -name=sb
+
+rep -id=A306 -path=/home/julio/Escritorio/MIA/Reportes/superblockext3.jpg -name=sb
+
+

@@ -13,3 +13,6 @@ rep -id=A106 -path=/home/julio/Escritorio/MIA/Reportes/disco.jpg -name=disk
 rep -id=A106 -path=/users.txt -ruta=/home/julio/Escritorio/MIA/Reportes/usuarios.txt -name=file
 rep -id=A106 -path=/home/julio/Escritorio/MIA/Reportes/arbol.jpg -name=tree
 rep -id=A206 -path=/home/julio/Escritorio/MIA/Reportes/arboln.jpg -name=tree
+rep -id=A306 -path=/home/julio/Escritorio/MIA/Reportes/arboln3.jpg -name=tree
+
+rep -id=A306 -path=/home/julio/Escritorio/MIA/Reportes/superblock.jpg -name=sb
