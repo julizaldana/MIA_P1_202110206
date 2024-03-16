@@ -126,7 +126,7 @@ func sesionActiva(u string, p string, id string) bool {
 				}
 
 				Mensaje("LOGIN", "logueado correctamente")
-				fmt.Println("\t\t-*-*-*¡BIENVENIDO  " + u + "!-*-*-*-*")
+				fmt.Println(Format(GREEN, "\t\t-*-*-*¡BIENVENIDO  "+u+"!-*-*-*-*"))
 				Logged.Id = id
 				Logged.User = u
 				Logged.Password = p
@@ -141,7 +141,7 @@ func sesionActiva(u string, p string, id string) bool {
 }
 
 func CerrarSesion() bool {
-	fmt.Println("\t\t¡Adiós " + Logged.User + ", hasta pronto!")
+	fmt.Println(Format(PURPLE, "\t\t¡Adiós "+Logged.User+", hasta pronto!"))
 	Mensaje("LOGOUT", "Se ha cerrado la sesión correctamente")
 	Logged = UsuarioActivo{}
 	return false

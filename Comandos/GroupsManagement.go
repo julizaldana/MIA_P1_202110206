@@ -325,3 +325,140 @@ func rmgrp(n string) {
 
 	file.Close()
 }
+
+func ValidarDatosCHGRP(context []string) {
+	user := ""
+	grp := ""
+
+	for i := 0; i < len(context); i++ {
+		token := context[i]
+		tk := strings.Split(token, "=")
+		if Comparar(tk[0], "user") {
+			user = tk[1]
+		} else if Comparar(tk[0], "grp") {
+			grp = tk[1]
+		}
+	}
+	if user == "" || grp == "" {
+		Error("CHGRP", "Se necesita el user y el nombre de grupo para hacer el cambio")
+	} else {
+		chgrp(user, grp)
+	}
+
+}
+
+func chgrp(user string, grp string) {
+	if !Comparar(Logged.User, "root") {
+		Error("CHGRP", "Solo el usuario \"root\" puede acceder a estos comandos.")
+		return
+	}
+
+	var path string
+	partition := GetMount("CHGRP", Logged.Id, &path)
+	if string(partition.Part_status) == "0" {
+		Error("CHGRP", "No se encontró la partición montada con el id: "+Logged.Id)
+		return
+	}
+
+	file, err := os.OpenFile(strings.ReplaceAll(path, "\"", ""), os.O_WRONLY, os.ModeAppend)
+	if err != nil {
+		Error("CHGRP", "No se ha encontrado el disco.")
+		return
+	}
+
+	super := Structs.NewSuperBloque()
+	file.Seek(partition.Part_start, 0)
+	data := leerBytes(file, int(unsafe.Sizeof(Structs.SuperBloque{})))
+	buffer := bytes.NewBuffer(data)
+	err = binary.Read(buffer, binary.BigEndian, &super)
+	if err != nil {
+		Error("CHGRP", "Error al leer el archivo")
+		return
+	}
+
+	inode := Structs.NewInodos()
+	file.Seek(super.S_inode_start+int64(unsafe.Sizeof(Structs.Inodos{})), 0)
+	data = leerBytes(file, int(unsafe.Sizeof(Structs.Inodos{})))
+	buffer = bytes.NewBuffer(data)
+	err = binary.Read(buffer, binary.BigEndian, &inode)
+	if err != nil {
+		Error("CHGRP", "Error al leer el archivo")
+		return
+	}
+
+	var fb Structs.BloquesArchivos
+	txt := ""
+	for bloque := 1; bloque < 16; bloque++ {
+		if inode.I_block[bloque-1] == -1 {
+			break
+		}
+		file.Seek(super.S_block_start+int64(unsafe.Sizeof(Structs.BloquesCarpetas{}))+int64(unsafe.Sizeof(Structs.BloquesArchivos{}))*int64(bloque-1), 0)
+
+		data = leerBytes(file, int(unsafe.Sizeof(Structs.BloquesArchivos{})))
+		buffer = bytes.NewBuffer(data)
+		err = binary.Read(buffer, binary.BigEndian, &fb)
+
+		if err != nil {
+			Error("CHGRP", "Error al leer el archivo")
+			return
+		}
+
+		for i := 0; i < len(fb.B_content); i++ {
+			if fb.B_content[i] != 0 {
+				txt += string(fb.B_content[i])
+			}
+		}
+	}
+
+	vctr := strings.Split(txt, "\n")
+	existeUsuario := false
+	existeGrupo := false
+	for i := 0; i < len(vctr)-1; i++ {
+		linea := vctr[i]
+		if (linea[2] == 'U' || linea[2] == 'u') && linea[0] != '0' {
+			in := strings.Split(linea, ",")
+			if in[3] == user {
+				existeUsuario = true
+				in[2] = grp // Cambiar el grupo
+				vctr[i] = strings.Join(in, ",")
+			}
+		}
+		if (linea[2] == 'G' || linea[2] == 'g') && linea[0] != '0' {
+			in := strings.Split(linea, ",")
+			if in[2] == grp {
+				existeGrupo = true
+			}
+		}
+	}
+
+	if !existeUsuario {
+		Error("CHGRP", "El usuario \""+user+"\" no existe.")
+		return
+	}
+
+	if !existeGrupo {
+		Error("CHGRP", "El grupo \""+grp+"\" no existe.")
+		return
+	}
+
+	// Escribir los cambios de nuevo en el archivo
+	txt = strings.Join(vctr, "\n")
+
+	// Truncar el archivo antes de escribir los cambios
+	err = file.Truncate(0)
+	if err != nil {
+		Error("CHGRP", "Error al truncar el archivo")
+		return
+	}
+
+	// Escribir el texto modificado en el archivo
+	_, err = file.WriteAt([]byte(txt), 0)
+	if err != nil {
+		Error("CHGRP", "Error al escribir en el archivo")
+		return
+	}
+
+	Mensaje("CHGRP", "Grupo de usuario "+user+" cambiado a "+grp+" correctamente.")
+
+	file.Close()
+}

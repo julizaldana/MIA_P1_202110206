@@ -285,10 +285,10 @@ func funciones(token string, tks []string) {
 		} else if Comandos.Comparar(token, "CHGRP") {
 			fmt.Println("=*=*=*=*=*=*= FUNCION CHGRP =*=*=*=*=*=*=*=")
 			if !logued {
-				Comandos.Error("RENAME", "Aún no se ha iniciado sesión con ningún usuario.")
+				Comandos.Error("CHGRP", "Aún no se ha iniciado sesión con ningún usuario.")
 				return
 			} else {
-				//Comandos.ValidarDatosCHGRP(tks)
+				Comandos.ValidarDatosCHGRP(tks)
 			}
 		} else if Comandos.Comparar(token, "CHOWN") {
 			fmt.Println("=*=*=*=*=*=*= FUNCION CHOWN =*=*=*=*=*=*=*=")

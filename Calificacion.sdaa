@@ -52,12 +52,14 @@ pause
 login -user=root -pass=123 -id=A106
 
 mkgrp -name=usuarios
+mkgrp -name=archivos
 
 mkusr -user=user1 -pass=usuario -grp=usuarios
 mkusr -user=user2 -pass=usuario2 -grp=usuarios
 
 rmusr -user=user2
 
+chgrp -user=user1 -grp=archivos
 
 # MKDIR
 
@@ -80,3 +82,5 @@ fdisk -type=L -unit=M -name=Part8 -size=5 -driveletter=A
 rep -id=A106 -path=/home/julio/Escritorio/MIA/Reportes/disco.jpg -name=disk
 rep -id=A106 -path=/home/julio/Escritorio/MIA/Reportes/mbr.jpg -name=mbr
 
+#A106
+mount -driveletter=A -name=Part1

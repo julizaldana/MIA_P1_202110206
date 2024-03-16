@@ -25,7 +25,7 @@ func Error(op string, mensaje string) {
 }
 
 func Mensaje(op string, mensaje string) {
-	fmt.Println("\tCOMANDO: " + op + "\n\tTIPO: " + mensaje)
+	fmt.Println(Format(BLUE, "\tCOMANDO: "+op+"\n\tTIPO: "+mensaje))
 }
 
 func Confirmar(mensaje string) bool {

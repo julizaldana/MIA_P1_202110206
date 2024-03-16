@@ -310,7 +310,7 @@ func mbr(p string, id string) {
 	}
 
 	//mbrTamanoStr := strconv.FormatFloat(float64(disk.Mbr_tamano), 'f', -1, 64)
-	content := "digraph G {\n  node0 [shape=none label=<\n  <TABLE cellspacing=\"10\" cellpadding=\"10\" style=\"rounded\" bgcolor=\"#d5f2e9\">\n  <TR>\n  <TD COLSPAN = '2' bgcolor=\"#34e5b0\">REPORTE MBR</TD>\n  </TR>\n  <TR>\n " +
+	content := "digraph G {\n  node0 [shape=none label=<\n  <TABLE style=\"rounded\" bgcolor=\"#d5f2e9\">\n  <TR>\n  <TD COLSPAN = '2' bgcolor=\"#34e5b0\">REPORTE MBR</TD>\n  </TR>\n  <TR>\n " +
 		"<TD bgcolor=\" #cff5e5 \">mbr_tamano</TD>\n  <TD bgcolor=\" #cff5e5 \">" + strconv.Itoa(int(disk.Mbr_tamano)) + "</TD>\n  </TR>" + "<TR>\n  <TD bgcolor=\" #cff5e5 \">mbr_fecha_creacion</TD>\n  <TD bgcolor=\" #cff5e5 \">" + string(disk.Mbr_fecha_creacion[:]) +
 		"</TD>\n  </TR>\n  <TR>\n  <TD bgcolor=\" #cff5e5 \">mbr_disk_signature</TD>\n  <TD bgcolor=\" #cff5e5 \">" + strconv.Itoa(int(disk.Mbr_dsk_signature)) + "</TD>\n  </TR>"
 
@@ -347,6 +347,7 @@ func mbr(p string, id string) {
 		}
 
 		for auxEbr.Part_next != -1 {
+			partName := strings.TrimRight(string(auxEbr.Part_name[:]), "\x00")
 			content += "<TR>\n" +
 				"<TD COLSPAN = '2' bgcolor=\"#63bdcf\">Particion Logica (EBR)</TD>\n" +
 				"</TR>\n" +
@@ -372,7 +373,7 @@ func mbr(p string, id string) {
 				"</TR>\n" +
 				"<TR>\n" +
 				"<TD bgcolor=\"#a9dee9\">part_name</TD>\n" +
-				"<TD bgcolor=\"#a9dee9\">" + string(auxEbr.Part_name[:]) + "</TD>\n" +
+				"<TD bgcolor=\"#a9dee9\">" + partName + "</TD>\n" +
 				"</TR>\n"
 
 			// Mover el puntero al siguiente registro de arranque extendido
@@ -426,6 +427,8 @@ func graficarParticiones(disk Structs.MBR) string {
 }
 
 func generarTablaParticion(particion Structs.Particion) string {
+	partName := strings.TrimRight(string(particion.Part_name[:]), "\x00")
+
 	tabla := "<TR>\n"
 	tabla += "<TD COLSPAN = '2' bgcolor=\"#34e5dd\">Particion</TD>\n"
 	tabla += "</TR>\n"
@@ -451,7 +454,7 @@ func generarTablaParticion(particion Structs.Particion) string {
 	tabla += "</TR>\n"
 	tabla += "<TR>\n"
 	tabla += "<TD bgcolor=\"#b0ebe8\">part_name</TD>\n"
-	tabla += "<TD bgcolor=\"#b0ebe8\">" + string(particion.Part_name[:]) + "</TD>\n"
+	tabla += "<TD bgcolor=\"#b0ebe8\">" + partName + "</TD>\n"
 	tabla += "</TR>\n"
 	return tabla
 }
