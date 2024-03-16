@@ -134,7 +134,7 @@ func dks(p string, id string) {
 		}
 	}
 
-	content := "digraph G{\n rankdir=TB;\n forcelabels= true;\n graph [ dpi = \"600\"] ; \n node [shape = plaintext];\n nodo1 [label = <<table>\n <tr>\n"
+	content := "digraph G{\n rankdir=TB;\n forcelabels= true;\n graph [ dpi = \"600\"] ; \n node [shape = plaintext];\n nodo1 [label = <<table>\n <tr>\n <td ROWSPAN='2'> \"MBR\" </td>"
 	var positions [5]int64
 	var positionsii [5]int64
 	positions[0] = disk.Mbr_partition_1.Part_start - (1 + int64(unsafe.Sizeof(Structs.MBR{})))
@@ -142,7 +142,6 @@ func dks(p string, id string) {
 	positions[2] = disk.Mbr_partition_3.Part_start - disk.Mbr_partition_2.Part_start + disk.Mbr_partition_2.Part_s
 	positions[3] = disk.Mbr_partition_4.Part_start - disk.Mbr_partition_3.Part_start + disk.Mbr_partition_3.Part_s
 	positions[4] = disk.Mbr_tamano + 1 - disk.Mbr_partition_4.Part_s + disk.Mbr_partition_4.Part_s
-
 	copy(positionsii[:], positions[:])
 
 	logic := 0
@@ -265,7 +264,196 @@ func dks(p string, id string) {
 
 // REPORTE MBR Y EBR
 func mbr(p string, id string) {
-	//
+	var pth string
+	GetMount("REP", id, &pth)
+
+	//file
+	file, err := os.Open(strings.ReplaceAll(pth, "\"", ""))
+
+	if err != nil {
+		Error("REP", "No se ha encontrado el disco.")
+		return
+	}
+	var disk Structs.MBR
+	file.Seek(0, 0)
+
+	data := leerBytes(file, int(unsafe.Sizeof(Structs.MBR{})))
+	buffer := bytes.NewBuffer(data)
+	err_ := binary.Read(buffer, binary.BigEndian, &disk)
+	if err_ != nil {
+		Error("REP", "Error al leer el archivo")
+		return
+	}
+	file.Close()
+
+	aux := strings.Split(p, ".")
+	if len(aux) > 2 {
+		Error("REP", "No se admiten nombres de archivos que contengan punto (.)")
+		return
+	}
+	pd := aux[0] + ".dot"
+
+	carpeta := ""
+	direccion := strings.Split(pd, "/")
+
+	fileaux, _ := os.Open(strings.ReplaceAll(pd, "\"", ""))
+	if fileaux == nil {
+		for i := 0; i < len(direccion); i++ {
+			carpeta += "/" + direccion[i]
+			if _, err_2 := os.Stat(carpeta); os.IsNotExist(err_2) {
+				os.Mkdir(carpeta, 0777)
+			}
+		}
+		os.Remove(pd)
+	} else {
+		fileaux.Close()
+	}
+
+	//mbrTamanoStr := strconv.FormatFloat(float64(disk.Mbr_tamano), 'f', -1, 64)
+	content := "digraph G {\n  node0 [shape=none label=<\n  <TABLE cellspacing=\"10\" cellpadding=\"10\" style=\"rounded\" bgcolor=\"#d5f2e9\">\n  <TR>\n  <TD COLSPAN = '2' bgcolor=\"#34e5b0\">REPORTE MBR</TD>\n  </TR>\n  <TR>\n " +
+		"<TD bgcolor=\" #cff5e5 \">mbr_tamano</TD>\n  <TD bgcolor=\" #cff5e5 \">" + strconv.Itoa(int(disk.Mbr_tamano)) + "</TD>\n  </TR>" + "<TR>\n  <TD bgcolor=\" #cff5e5 \">mbr_fecha_creacion</TD>\n  <TD bgcolor=\" #cff5e5 \">" + string(disk.Mbr_fecha_creacion[:]) +
+		"</TD>\n  </TR>\n  <TR>\n  <TD bgcolor=\" #cff5e5 \">mbr_disk_signature</TD>\n  <TD bgcolor=\" #cff5e5 \">" + strconv.Itoa(int(disk.Mbr_dsk_signature)) + "</TD>\n  </TR>"
+
+	contenidoParticiones := graficarParticiones(disk)
+	content += contenidoParticiones
+
+	file, err = os.Open(strings.ReplaceAll(pth, "\n", ""))
+	if err != nil {
+		Error("REP", "No se ha encontrado el disco")
+		return
+	}
+
+	partitions := GetParticiones(disk)
+	ext := false
+	var extended Structs.Particion
+	for i := 0; i < 4; i++ {
+		if partitions[i].Part_status == '1' {
+			if partitions[i].Part_type == "E"[0] || partitions[i].Part_type == "e"[0] {
+				ext = true
+				extended = partitions[i]
+			}
+		}
+	}
+
+	if ext {
+		auxEbr := Structs.NewEBR()
+		file.Seek(extended.Part_start, 0)
+		data = leerBytes(file, int(unsafe.Sizeof(Structs.EBR{})))
+		buffer = bytes.NewBuffer(data)
+		err_ = binary.Read(buffer, binary.BigEndian, &auxEbr)
+		if err_ != nil {
+			Error("REP", "Error al leer el archivo")
+			return
+		}
+
+		for auxEbr.Part_next != -1 {
+			content += "<TR>\n" +
+				"<TD COLSPAN = '2' bgcolor=\"#63bdcf\">Particion Logica (EBR)</TD>\n" +
+				"</TR>\n" +
+				"<TR>\n" +
+				"<TD bgcolor=\"#a9dee9\">part_status</TD>\n" +
+				"<TD bgcolor=\"#a9dee9\">" + string(auxEbr.Part_mount) + "</TD>\n" +
+				"</TR>\n" +
+				"<TR>\n" +
+				"<TD bgcolor=\"#a9dee9\">part_fit</TD>\n" +
+				"<TD bgcolor=\"#a9dee9\">" + string(auxEbr.Part_fit) + "</TD>\n" +
+				"</TR>\n" +
+				"<TR>\n" +
+				"<TD bgcolor=\"#a9dee9\">part_start</TD>\n" +
+				"<TD bgcolor=\"#a9dee9\">" + strconv.Itoa(int(auxEbr.Part_start)) + "</TD>\n" +
+				"</TR>\n" +
+				"<TR>\n" +
+				"<TD bgcolor=\"#a9dee9\">part_size</TD>\n" +
+				"<TD bgcolor=\"#a9dee9\">" + strconv.Itoa(int(auxEbr.Part_s)) + "</TD>\n" +
+				"</TR>\n" +
+				"<TR>\n" +
+				"<TD bgcolor=\"#a9dee9\">part_next</TD>\n" +
+				"<TD bgcolor=\"#a9dee9\">" + strconv.Itoa(int(auxEbr.Part_next)) + "</TD>\n" +
+				"</TR>\n" +
+				"<TR>\n" +
+				"<TD bgcolor=\"#a9dee9\">part_name</TD>\n" +
+				"<TD bgcolor=\"#a9dee9\">" + string(auxEbr.Part_name[:]) + "</TD>\n" +
+				"</TR>\n"
+
+			// Mover el puntero al siguiente registro de arranque extendido
+			file.Seek(auxEbr.Part_next, 0)
+
+			// Leer el siguiente EBR
+			data = leerBytes(file, int(unsafe.Sizeof(Structs.EBR{})))
+			buffer = bytes.NewBuffer(data)
+			err_ = binary.Read(buffer, binary.BigEndian, &auxEbr)
+			if err_ != nil {
+				Error("REP", "Error al leer el archivo")
+				return
+			}
+		}
+
+		file.Close() // Cerrar el archivo después de terminar de leer todos los EBRs
+	}
+
+	content += "</TABLE>>];\n\n}"
+
+	//fmt.Println(content)
+
+	//CREAR IMAGEN
+	b := []byte(content)
+	err_ = ioutil.WriteFile(pd, b, 0644)
+	if err_ != nil {
+		log.Fatal(err_)
+	}
+
+	terminacion := strings.Split(p, ".")
+
+	path, _ := exec.LookPath("dot")
+	cmd, _ := exec.Command(path, "-T"+terminacion[1], pd).Output()
+	node := int(0777)
+	ioutil.WriteFile(p, cmd, os.FileMode(node))
+	disco := strings.Split(pth, "/")
+	Mensaje("REP", "Reporte tipo MBR del disco "+disco[len(disco)-1]+",creado correctamente")
+
+}
+
+func graficarParticiones(disk Structs.MBR) string {
+	contenido := ""
+	particiones := GetParticiones(disk)
+	for i := 0; i < len(particiones); i++ {
+		// Solo graficar la partición si su part_start es diferente de -1
+		if particiones[i].Part_start != -1 {
+			contenido += generarTablaParticion(particiones[i])
+		}
+	}
+	return contenido
+}
+
+func generarTablaParticion(particion Structs.Particion) string {
+	tabla := "<TR>\n"
+	tabla += "<TD COLSPAN = '2' bgcolor=\"#34e5dd\">Particion</TD>\n"
+	tabla += "</TR>\n"
+	tabla += "<TR>\n"
+	tabla += "<TD bgcolor=\"#b0ebe8\">part_status</TD>\n"
+	tabla += "<TD bgcolor=\"#b0ebe8\">" + string(particion.Part_status) + "</TD>\n"
+	tabla += "</TR>\n"
+	tabla += "<TR>\n"
+	tabla += "<TD bgcolor=\"#b0ebe8\">part_type</TD>\n"
+	tabla += "<TD bgcolor=\"#b0ebe8\">" + string(particion.Part_type) + "</TD>\n"
+	tabla += "</TR>\n"
+	tabla += "<TR>\n"
+	tabla += "<TD bgcolor=\"#b0ebe8\">part_fit</TD>\n"
+	tabla += "<TD bgcolor=\"#b0ebe8\">" + string(particion.Part_fit) + "</TD>\n"
+	tabla += "</TR>\n"
+	tabla += "<TR>\n"
+	tabla += "<TD bgcolor=\"#b0ebe8\">part_start</TD>\n"
+	tabla += "<TD bgcolor=\"#b0ebe8\">" + strconv.Itoa(int(particion.Part_start)) + "</TD>\n"
+	tabla += "</TR>\n"
+	tabla += "<TR>\n"
+	tabla += "<TD bgcolor=\"#b0ebe8\">part_size</TD>\n"
+	tabla += "<TD bgcolor=\"#b0ebe8\">" + strconv.Itoa(int(particion.Part_s)) + "</TD>\n"
+	tabla += "</TR>\n"
+	tabla += "<TR>\n"
+	tabla += "<TD bgcolor=\"#b0ebe8\">part_name</TD>\n"
+	tabla += "<TD bgcolor=\"#b0ebe8\">" + string(particion.Part_name[:]) + "</TD>\n"
+	tabla += "</TR>\n"
+	return tabla
 }
 
 // REPORTE TREE

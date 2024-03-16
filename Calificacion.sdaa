@@ -77,5 +77,6 @@ fdisk -type=L -unit=M -name=Part8 -size=5 -driveletter=A
 
 
 
-rep -id=A106 -path=/home/julio/Escritorio/MIA/disco.jpg -name=disk
+rep -id=A106 -path=/home/julio/Escritorio/MIA/Reportes/disco.jpg -name=disk
+rep -id=A106 -path=/home/julio/Escritorio/MIA/Reportes/mbr.jpg -name=mbr
 
